@@ -56,7 +56,7 @@ export default function ProposalGame() {
     const getNoMessage = () => {
         const messages = [
             "Arre, galat button! 😤",
-            "Yeh wala nahi, woh wala! 👉",
+            "Yeh wala nahi, woh wala! 👈",
             "Naa matlab haan hi samjho! 😏",
             "Try again... choose wisely! 💕",
             "Haan bol do na please! 🥺",

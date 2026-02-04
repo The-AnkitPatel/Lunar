@@ -7,14 +7,7 @@ const prompts = [
     "The thing I miss most when we're apart is...",
     "My favorite thing about your smile is...",
     "If I could spend forever with you, I would...",
-    "The first thing I think about when I wake up is...",
-    "You make me feel like...",
-    "My dream date with you would be...",
-    "The moment I realized you were special was...",
-    "I love it when you...",
-    "Our love story is like...",
     "In 5 years, I see us...",
-    "The cutest thing you do is...",
 ];
 
 export default function CompleteSentence() {

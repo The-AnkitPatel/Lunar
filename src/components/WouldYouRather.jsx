@@ -8,14 +8,6 @@ const questions = [
         optionB: "Go on an adventurous date outside",
     },
     {
-        optionA: "Get a long love letter from me",
-        optionB: "Get a surprise visit from me",
-    },
-    {
-        optionA: "Watch the sunrise together",
-        optionB: "Watch the stars together at night",
-    },
-    {
         optionA: "Have me cook for you (even if I'm bad)",
         optionB: "Go to a fancy restaurant together",
     },
@@ -24,32 +16,12 @@ const questions = [
         optionB: "Kiss under the fireworks",
     },
     {
-        optionA: "Have 100 photos of us",
-        optionB: "Have 1 perfect video of us",
-    },
-    {
-        optionA: "Know what I'm thinking always",
-        optionB: "Feel what I'm feeling always",
-    },
-    {
-        optionA: "Never argue but also never make up",
-        optionB: "Argue sometimes but have amazing makeups",
-    },
-    {
-        optionA: "Get a handwritten poem from me",
-        optionB: "Get a song dedicated to you",
-    },
-    {
-        optionA: "Be with me on every birthday",
-        optionB: "Be with me on every New Year's Eve",
-    },
-    {
-        optionA: "Travel the world together but never settle",
-        optionB: "Build a cozy home together and stay",
-    },
-    {
         optionA: "Wake up to my 'good morning' text every day",
         optionB: "Fall asleep to my 'good night' call every night",
+    },
+    {
+        optionA: "Build a cozy home together and stay",
+        optionB: "Travel the world together but never settle",
     },
 ];
 
@@ -105,10 +77,10 @@ export default function WouldYouRather() {
                         onClick={() => handleSelect('A')}
                         disabled={selected !== null}
                         className={`w-full p-5 rounded-xl border text-left transition-all ${selected === 'A'
-                                ? 'bg-gradient-to-r from-rose-500 to-red-600 border-rose-400 text-white'
-                                : selected === 'B'
-                                    ? 'bg-white/5 border-white/10 text-white/40'
-                                    : 'bg-white/5 border-white/20 text-white hover:bg-white/10'
+                            ? 'bg-gradient-to-r from-rose-500 to-red-600 border-rose-400 text-white'
+                            : selected === 'B'
+                                ? 'bg-white/5 border-white/10 text-white/40'
+                                : 'bg-white/5 border-white/20 text-white hover:bg-white/10'
                             }`}
                     >
                         <span className="text-rose-400 text-sm font-medium">Option A</span>
@@ -127,10 +99,10 @@ export default function WouldYouRather() {
                         onClick={() => handleSelect('B')}
                         disabled={selected !== null}
                         className={`w-full p-5 rounded-xl border text-left transition-all ${selected === 'B'
-                                ? 'bg-gradient-to-r from-purple-500 to-pink-600 border-purple-400 text-white'
-                                : selected === 'A'
-                                    ? 'bg-white/5 border-white/10 text-white/40'
-                                    : 'bg-white/5 border-white/20 text-white hover:bg-white/10'
+                            ? 'bg-gradient-to-r from-purple-500 to-pink-600 border-purple-400 text-white'
+                            : selected === 'A'
+                                ? 'bg-white/5 border-white/10 text-white/40'
+                                : 'bg-white/5 border-white/20 text-white hover:bg-white/10'
                             }`}
                     >
                         <span className="text-purple-400 text-sm font-medium">Option B</span>

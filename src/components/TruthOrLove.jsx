@@ -5,27 +5,17 @@ import { motion, AnimatePresence } from 'framer-motion';
 const truthQuestions = [
     "What's the first thing you noticed about me?",
     "What's your favorite memory of us so far?",
-    "If you could describe our love in 3 words, what would they be?",
-    "What's one thing about me that makes you smile?",
-    "What's the cutest thing I do without realizing it?",
-    "What song reminds you of us?",
-    "What's something you've never told me but always wanted to?",
-    "If we could go anywhere together, where would it be?",
-    "What's your favorite thing I say to you?",
     "What moment made you realize you loved me?",
+    "What's one thing about me that makes you smile?",
+    "If you could describe our love in 3 words, what would they be?",
 ];
 
 const loveActions = [
     "Send me your cutest selfie right now 📸",
     "Tell me 3 things you love about me",
     "Send me a voice note saying 'I love you'",
-    "Share your favorite photo of us (or one you wish we had)",
-    "Write me a 2-line poem about our love",
-    "Tell me what you're thinking about right now",
     "Describe your perfect day with me",
     "Send me the emoji that describes how you feel about me",
-    "Tell me a secret you've been keeping",
-    "Say something that'll make me blush",
 ];
 
 export default function TruthOrLove() {
