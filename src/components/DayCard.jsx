@@ -26,14 +26,14 @@ export default function DayCard({ dayData }) {
       </h2>
 
       {/* Message */}
-      <p className="text-white/90 text-sm leading-relaxed text-center mb-4 font-light">
+      <p className="text-white/90 text-sm leading-relaxed text-center mb-4 font-light whitespace-pre-wrap">
         {dayData.message}
       </p>
 
       {/* Quote */}
       <div className="bg-rose-500/10 rounded-xl p-4 border-l-2 border-rose-500 relative overflow-hidden">
         <div className="absolute -right-2 -top-2 text-4xl text-rose-500/10 font-serif">"</div>
-        <p className="text-white/80 text-sm italic leading-relaxed relative z-10">
+        <p className="text-white/80 text-sm italic leading-relaxed relative z-10 whitespace-pre-wrap">
           "{dayData.quote}"
         </p>
       </div>

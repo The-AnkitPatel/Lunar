@@ -39,14 +39,14 @@ export const loveQuizQuestions = [
 
 // Spin Wheel Love Messages
 export const wheelMessages = [
-    { text: "You deserve 100 kisses! 💋", color: "#E63946" },
-    { text: "Movie night with cuddles! 🎬", color: "#FF6B6B" },
-    { text: "I'll cook your favorite meal! 🍝", color: "#C21E56" },
-    { text: "A surprise date is coming! 🎁", color: "#FF69B4" },
-    { text: "Unlimited hugs today! 🤗", color: "#D4AF37" },
-    { text: "Love letter coming your way! 💌", color: "#FFB6C1" },
-    { text: "I'll do anything you want! 👑", color: "#9B59B6" },
-    { text: "You're getting extra spoiled! 💎", color: "#3498DB" }
+    { text: "Close your eyes & imagine hugging me 🤗", color: "#E63946" },
+    { text: "Send a flying kiss video 😘", color: "#FF6B6B" },
+    { text: "Text me the thing you miss most �", color: "#C21E56" },
+    { text: "Dedicate a romantic song to me 🎵", color: "#FF69B4" },
+    { text: "Close your eyes & imagine hugging me 🤗", color: "#D4AF37" },
+    { text: "Send a flying kiss video �", color: "#FFB6C1" },
+    { text: "Text me the thing you miss most �", color: "#9B59B6" },
+    { text: "Dedicate a romantic song to me 🎵", color: "#3498DB" }
 ];
 
 // Memory Game Cards
@@ -131,7 +131,7 @@ export const loveCoupons = [
     },
     {
         id: 10,
-        icon: "💋",
+        icon: "😘",
         title: "100 Kisses",
         description: "Exactly 100 kisses delivered throughout the day!"
     },
@@ -154,28 +154,28 @@ export const loveCoupons = [
 // ============================================
 export const challengeCards = [
     // Romantic Challenges
-    { id: 1, type: "romantic", typeLabel: "💕 Romantic", icon: "💋", challenge: "Give your partner 10 kisses on different parts of their face", description: "Forehead, cheeks, nose, chin... make each one special!" },
+    { id: 1, type: "romantic", typeLabel: "💕 Romantic", icon: "😘", challenge: "Give your partner 10 kisses on different parts of their face", description: "Forehead, cheeks, nose, chin... make each one special!" },
     { id: 2, type: "romantic", typeLabel: "💕 Romantic", icon: "🤗", challenge: "Hug for 2 full minutes without letting go", description: "Feel each other's heartbeat and breathe together" },
     { id: 3, type: "romantic", typeLabel: "💕 Romantic", icon: "👀", challenge: "Look into each other's eyes for 60 seconds", description: "No talking, no laughing - just connection" },
     { id: 4, type: "romantic", typeLabel: "💕 Romantic", icon: "💌", challenge: "Write 3 things you love about your partner on their hand", description: "Use your finger to write invisible words of love" },
     { id: 5, type: "romantic", typeLabel: "💕 Romantic", icon: "🌙", challenge: "Slow dance together for one song", description: "Pick your favorite love song and sway together" },
-    
+
     // Fun Challenges
     { id: 6, type: "fun", typeLabel: "🎉 Fun", icon: "🎭", challenge: "Do your best impression of your partner", description: "Copy their voice, expressions, and mannerisms!" },
     { id: 7, type: "fun", typeLabel: "🎉 Fun", icon: "📸", challenge: "Take the most ridiculous selfie together", description: "The weirder, the better! Make it memorable!" },
     { id: 8, type: "fun", typeLabel: "🎉 Fun", icon: "🎤", challenge: "Sing a love song to your partner", description: "Doesn't matter if you can sing - it's about the effort!" },
     { id: 9, type: "fun", typeLabel: "🎉 Fun", icon: "🕺", challenge: "Create a secret handshake together", description: "Make it at least 10 steps long!" },
     { id: 10, type: "fun", typeLabel: "🎉 Fun", icon: "😂", challenge: "Try to make your partner laugh without touching them", description: "Use jokes, faces, voices - whatever it takes!" },
-    
+
     // Sweet Challenges
     { id: 11, type: "sweet", typeLabel: "🍬 Sweet", icon: "💭", challenge: "Tell your partner your favorite memory of them", description: "Share the moment that made you fall deeper in love" },
     { id: 12, type: "sweet", typeLabel: "🍬 Sweet", icon: "🌟", challenge: "Compliment your partner 5 different ways", description: "Personality, looks, achievements, habits, anything!" },
     { id: 13, type: "sweet", typeLabel: "🍬 Sweet", icon: "🔮", challenge: "Describe your dream future together", description: "Where do you see yourselves in 10 years?" },
     { id: 14, type: "sweet", typeLabel: "🍬 Sweet", icon: "💝", challenge: "Share something you've never told anyone", description: "A secret, a fear, a dream - something intimate" },
     { id: 15, type: "sweet", typeLabel: "🍬 Sweet", icon: "✨", challenge: "Tell your partner why they're special", description: "What makes them different from everyone else?" },
-    
+
     // Spicy Challenges
-    { id: 16, type: "spicy", typeLabel: "🔥 Spicy", icon: "💋", challenge: "Give your partner a surprise kiss right now", description: "Make it passionate and unexpected!" },
+    { id: 16, type: "spicy", typeLabel: "🔥 Spicy", icon: "😘", challenge: "Give your partner a surprise kiss right now", description: "Make it passionate and unexpected!" },
     { id: 17, type: "spicy", typeLabel: "🔥 Spicy", icon: "🌹", challenge: "Whisper something flirty in your partner's ear", description: "Something that'll make them blush!" },
     { id: 18, type: "spicy", typeLabel: "🔥 Spicy", icon: "💫", challenge: "Recreate your first kiss", description: "Try to remember every detail and do it again!" },
     { id: 19, type: "spicy", typeLabel: "🔥 Spicy", icon: "🔥", challenge: "Play with your partner's hair for 2 minutes", description: "Gently, lovingly, romantically..." },
@@ -190,7 +190,7 @@ export const truthQuestions = [
     { id: 2, icon: "💕", question: "When did you first realize you had feelings for me?", hint: "The exact moment if you remember", level: "Easy" },
     { id: 3, icon: "🥺", question: "What's something you were afraid to tell me?", hint: "No judgment zone", level: "Medium" },
     { id: 4, icon: "🌟", question: "What's your favorite physical feature of mine?", hint: "Eyes, smile, hands...?", level: "Easy" },
-    { id: 5, icon: "💋", question: "What's your favorite non-physical thing about me?", hint: "Personality, habits, etc.", level: "Easy" },
+    { id: 5, icon: "😘", question: "What's your favorite non-physical thing about me?", hint: "Personality, habits, etc.", level: "Easy" },
     { id: 6, icon: "🔮", question: "Where do you see us in 5 years?", hint: "Dream big!", level: "Medium" },
     { id: 7, icon: "😳", question: "Have you ever dreamed about me? What happened?", hint: "Sweet dreams or funny ones!", level: "Medium" },
     { id: 8, icon: "💝", question: "What's something I do that makes your heart flutter?", hint: "The little things count!", level: "Easy" },
@@ -205,7 +205,7 @@ export const truthQuestions = [
 
 export const dareQuestions = [
     { id: 1, icon: "📱", question: "Send me a selfie making your cutest face right now!", hint: "No filters needed!", level: "Easy" },
-    { id: 2, icon: "💋", question: "Kiss me somewhere you've never kissed before", hint: "Get creative!", level: "Medium" },
+    { id: 2, icon: "😘", question: "Kiss me somewhere you've never kissed before", hint: "Get creative!", level: "Medium" },
     { id: 3, icon: "🎤", question: "Sing a love song for me - full performance!", hint: "Doesn't matter if you can sing!", level: "Fun" },
     { id: 4, icon: "💃", question: "Do your sexiest dance move for 30 seconds", hint: "No embarrassment allowed!", level: "Spicy" },
     { id: 5, icon: "👀", question: "Look into my eyes and say 3 things you love about me", hint: "No breaking eye contact!", level: "Easy" },
@@ -233,7 +233,7 @@ export const promiseSlips = [
     { id: 6, icon: "🎁", promise: "I promise to surprise you with thoughtful gifts when you least expect it" },
     { id: 7, icon: "👂", promise: "I promise to always listen to you, even when I'm tired or busy" },
     { id: 8, icon: "🌙", promise: "I promise to never let you fall asleep upset with me" },
-    { id: 9, icon: "💋", promise: "I promise to kiss you every morning and every night" },
+    { id: 9, icon: "😘", promise: "I promise to kiss you every morning and every night" },
     { id: 10, icon: "🎭", promise: "I promise to always make you laugh, even on your worst days" },
     { id: 11, icon: "✈️", promise: "I promise to take you on a surprise trip this year" },
     { id: 12, icon: "📱", promise: "I promise to always text you back quickly when I can" },
@@ -257,28 +257,28 @@ export const bucketListItems = [
     { id: 3, category: "travel", icon: "✈️", text: "Take an international trip together" },
     { id: 4, category: "travel", icon: "🚗", text: "Go on a spontaneous road trip" },
     { id: 5, category: "travel", icon: "🏕️", text: "Camp under the stars" },
-    
+
     // Fun Experiences
     { id: 6, category: "experiences", icon: "🎢", text: "Visit an amusement park together" },
     { id: 7, category: "experiences", icon: "🎬", text: "Have a complete movie marathon day" },
     { id: 8, category: "experiences", icon: "🍳", text: "Take a cooking class together" },
     { id: 9, category: "experiences", icon: "🎨", text: "Do a painting or art class date" },
     { id: 10, category: "experiences", icon: "🎤", text: "Sing karaoke together" },
-    
+
     // Romantic Moments
     { id: 11, category: "romantic", icon: "🌹", text: "Have a fancy candlelit dinner" },
     { id: 12, category: "romantic", icon: "💃", text: "Take a dance lesson together" },
     { id: 13, category: "romantic", icon: "🌙", text: "Stay up all night talking" },
     { id: 14, category: "romantic", icon: "📸", text: "Do a professional couples photoshoot" },
     { id: 15, category: "romantic", icon: "💌", text: "Write love letters to each other" },
-    
+
     // Growing Together
     { id: 16, category: "growth", icon: "🏠", text: "Decorate a space together" },
     { id: 17, category: "growth", icon: "🌱", text: "Start a plant or garden together" },
     { id: 18, category: "growth", icon: "📚", text: "Read the same book and discuss it" },
     { id: 19, category: "growth", icon: "🏋️", text: "Work out together for a month" },
     { id: 20, category: "growth", icon: "🎯", text: "Set and achieve a goal together" },
-    
+
     // Silly Things
     { id: 21, category: "silly", icon: "🛒", text: "Have a shopping cart race" },
     { id: 22, category: "silly", icon: "🎮", text: "Have an all-night gaming session" },

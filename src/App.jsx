@@ -24,10 +24,10 @@ const dayFeatures = [
   { day: 7, id: 'rose', name: 'Rose Day', icon: '🌹', component: 'truth', description: 'Truth or Love' },
   { day: 8, id: 'propose', name: 'Propose Day', icon: '💍', component: 'proposal', description: 'Say Haan!' },
   { day: 9, id: 'chocolate', name: 'Chocolate Day', icon: '🍫', component: 'rather', description: 'Would you rather' },
-  { day: 10, id: 'teddy', name: 'Teddy Day', icon: '🧸', component: 'complete', description: 'Complete sentence' },
+  { day: 10, id: 'teddy', name: 'Teddy Day', icon: '🧸', component: 'spin', description: 'Spinner Game' },
   { day: 11, id: 'promise', name: 'Promise Day', icon: '🤞', component: 'promises', description: 'Promise jar' },
   { day: 12, id: 'hug', name: 'Hug Day', icon: '🤗', component: 'coupons', description: 'Love coupons' },
-  { day: 13, id: 'kiss', name: 'Kiss Day', icon: '💋', component: 'scratch', description: 'Scratch cards' },
+  { day: 13, id: 'kiss', name: 'Kiss Day', icon: '😘', component: 'scratch', description: 'Scratch cards' },
   { day: 14, id: 'valentine', name: "Valentine's", icon: '❤️', component: 'letter', description: 'Love letter' }
 ];
 
@@ -249,7 +249,7 @@ function AppContent() {
 
         {/* Footer */}
         <footer className="mt-8 pt-6 border-t border-white/10 text-center">
-          <p className="font-script text-white/40 text-sm sm:text-base leading-relaxed italic">
+          <p className="font-script text-white/40 text-lg sm:text-xl leading-relaxed">
             "And if I were able to write my own destiny, I would simply write your name and break the pen."
           </p>
           <p className="text-rose-400/60 text-xs mt-2">— Forever Yours 💕</p>

@@ -55,7 +55,7 @@ export default function ScratchCard() {
 
     const ctx = canvas.getContext('2d');
     const rect = canvas.getBoundingClientRect();
-    
+
     let x, y;
     if (e.type.includes('touch')) {
       x = e.touches[0].clientX - rect.left;
@@ -77,7 +77,7 @@ export default function ScratchCard() {
     }
     const percent = (transparent / (imageData.data.length / 4)) * 100;
 
-    if (percent > 50 && !isScratched) {
+    if (percent > 85 && !isScratched) {
       setIsScratched(true);
       showRomanticToast('scratch');
     }
