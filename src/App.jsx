@@ -30,15 +30,15 @@ const DreamDatePlanner = lazy(() => import('./components/DreamDatePlanner'));
 
 // Loading spinner for lazy components
 function GameLoader() {
-    return (
-        <div className="flex items-center justify-center py-12">
-            <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                className="w-8 h-8 border-2 border-pink-500/30 border-t-pink-500 rounded-full"
-            />
-        </div>
-    );
+  return (
+    <div className="flex items-center justify-center py-12">
+      <motion.div
+        animate={{ rotate: 360 }}
+        transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+        className="w-8 h-8 border-2 border-pink-500/30 border-t-pink-500 rounded-full"
+      />
+    </div>
+  );
 }
 
 // All features unlocked - Each day has a unique game to bring you closer
@@ -105,9 +105,9 @@ function AppContent() {
     return now >= unlockDate;
   };
 
-  // Unlock secret after Feb 14th or if Admin
+  // Unlock secret after Feb 14th or if Admin or GF (for now)
   useEffect(() => {
-    if (isAdmin) {
+    if (isAdmin || isGf) {
       setShowSecret(true);
       return;
     }
@@ -117,7 +117,7 @@ function AppContent() {
     if (now >= unlockDate) {
       setShowSecret(true);
     }
-  }, [isAdmin]);
+  }, [isAdmin, isGf]);
 
   const renderFeatureContent = () => {
     if (!activeFeature) return null;
@@ -408,14 +408,14 @@ function AppContent() {
 
         {/* Lock Timer Modal */}
         <AnimatePresence>
-            {showLockModal && (
-                <LockTimerModal 
-                    unlockDate={lockedDayInfo.unlockDate} 
-                    dayName={lockedDayInfo.name}
-                    message={lockedDayInfo.message}
-                    onClose={() => setShowLockModal(false)} 
-                />
-            )}
+          {showLockModal && (
+            <LockTimerModal
+              unlockDate={lockedDayInfo.unlockDate}
+              dayName={lockedDayInfo.name}
+              message={lockedDayInfo.message}
+              onClose={() => setShowLockModal(false)}
+            />
+          )}
         </AnimatePresence>
 
         {/* Footer */}
