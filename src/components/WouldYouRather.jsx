@@ -4,21 +4,21 @@ import { saveGameResponse } from '../lib/tracking';
 import GameReviewSection from './GameReviewSection';
 
 const scenarios = [
-    { a: "Never be able to hug me again", b: "Never be able to text me again", category: "Touch vs Communication" },
+
     { a: "Go on a surprise trip with me", b: "Have me plan a perfect date for you", category: "Adventure" },
     { a: "Always know what I'm thinking", b: "Always know how I'm feeling", category: "Connection" },
     { a: "Live together in a cozy village house with a puppy", b: "Live in a big city apartment with a view", category: "Future Dreams" },
-    { a: "Get a cute handwritten letter from me every week", b: "Get a surprise video call at unexpected moments", category: "LDR Life" },
+
     { a: "Relive our first conversation", b: "Fast-forward to the day we finally meet again", category: "Memories vs Future" },
     { a: "Have me cook your favorite meal (but I'm terrible at cooking)", b: "Order expensive food but eat alone", category: "Effort vs Luxury" },
     { a: "Be my alarm clock voice every morning", b: "Be the last voice I hear before sleep", category: "Daily Rituals" },
-    { a: "Have me write a song about you", b: "Have me dedicate a star to you", category: "Grand Gestures" },
-    { a: "Travel every month to see each other", b: "Save up and close the distance forever", category: "LDR Decisions" },
-    { a: "Read each other's diaries from before we met", b: "Write a shared diary from now on", category: "Vulnerability" },
+
+
+
     { a: "Have a perfect memory of every moment together", b: "Always feel butterflies like it's the first time", category: "Deep" },
     { a: "Be stuck in an elevator with me for 24 hours", b: "Be stranded on a beautiful island with me for a week", category: "Adventure" },
     { a: "Have me always make you laugh when you're sad", b: "Have me always hold you tight when you cry", category: "Comfort" },
-    { a: "Celebrate Valentine's Week every month", b: "Have ONE legendary surprise every year", category: "Romance Style" },
+
 ];
 
 const personalityTraits = {
@@ -64,10 +64,10 @@ export default function WouldYouRather() {
         if (animating) return;
         setAnimating(true);
         setSelectedSide(side);
-        
+
         const newChoices = [...choices, { index: current, side, category: scenario.category }];
         setChoices(newChoices);
-        
+
         // Show explanation prompt after a beat
         setTimeout(() => {
             setShowExplanation(true);
@@ -102,7 +102,7 @@ export default function WouldYouRather() {
         setSelectedSide(null);
         setShowExplanation(false);
         setExplanation('');
-        
+
         if (current < scenarios.length - 1) {
             setCurrent(prev => prev + 1);
         } else {
@@ -135,8 +135,8 @@ export default function WouldYouRather() {
     if (completed) {
         const topTraits = getPersonality();
         return (
-            <motion.div 
-                initial={{ opacity: 0, scale: 0.9 }} 
+            <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 className="space-y-6"
             >
@@ -144,10 +144,10 @@ export default function WouldYouRather() {
                     <div className="text-5xl mb-4">💝</div>
                     <h3 className="text-white text-xl font-bold mb-2">Your Love Personality</h3>
                     <p className="text-white/60 text-sm mb-6">Based on {choices.length} choices</p>
-                    
+
                     <div className="space-y-3 mb-6">
                         {topTraits.map((trait, i) => (
-                            <motion.div 
+                            <motion.div
                                 key={trait}
                                 initial={{ opacity: 0, x: -20 }}
                                 animate={{ opacity: 1, x: 0 }}
@@ -200,7 +200,7 @@ export default function WouldYouRather() {
 
             {/* Progress bar */}
             <div className="w-full h-1 rounded-full bg-white/5 overflow-hidden">
-                <motion.div 
+                <motion.div
                     className="h-full rounded-full bg-gradient-to-r from-love-400 to-purple-500"
                     animate={{ width: `${((current + 1) / scenarios.length) * 100}%` }}
                     transition={{ duration: 0.5 }}
@@ -221,16 +221,15 @@ export default function WouldYouRather() {
                         whileTap={{ scale: 0.97 }}
                         onClick={() => handleChoice('a')}
                         disabled={selectedSide !== null}
-                        className={`w-full p-5 rounded-2xl text-left transition-all duration-500 border relative overflow-hidden ${
-                            selectedSide === 'a'
+                        className={`w-full p-5 rounded-2xl text-left transition-all duration-500 border relative overflow-hidden ${selectedSide === 'a'
                                 ? 'bg-gradient-to-r from-blue-500/30 to-blue-600/30 border-blue-400/40 shadow-lg shadow-blue-500/10'
                                 : selectedSide === 'b'
                                     ? 'bg-white/3 border-white/5 opacity-40'
                                     : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
-                        }`}
+                            }`}
                     >
                         {selectedSide === 'a' && (
-                            <motion.div 
+                            <motion.div
                                 className="absolute inset-0 bg-blue-400/5"
                                 initial={{ scaleX: 0 }}
                                 animate={{ scaleX: 1 }}
@@ -248,7 +247,7 @@ export default function WouldYouRather() {
 
                     {/* VS Divider */}
                     <div className="flex items-center justify-center">
-                        <motion.div 
+                        <motion.div
                             className="w-10 h-10 rounded-full bg-gradient-to-br from-love-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold shadow-lg"
                             animate={selectedSide ? { scale: [1, 1.3, 0.8, 1], rotate: [0, 180, 360] } : {}}
                             transition={{ duration: 0.6 }}
@@ -262,16 +261,15 @@ export default function WouldYouRather() {
                         whileTap={{ scale: 0.97 }}
                         onClick={() => handleChoice('b')}
                         disabled={selectedSide !== null}
-                        className={`w-full p-5 rounded-2xl text-left transition-all duration-500 border relative overflow-hidden ${
-                            selectedSide === 'b'
+                        className={`w-full p-5 rounded-2xl text-left transition-all duration-500 border relative overflow-hidden ${selectedSide === 'b'
                                 ? 'bg-gradient-to-r from-rose-500/30 to-red-600/30 border-rose-400/40 shadow-lg shadow-rose-500/10'
                                 : selectedSide === 'a'
                                     ? 'bg-white/3 border-white/5 opacity-40'
                                     : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
-                        }`}
+                            }`}
                     >
                         {selectedSide === 'b' && (
-                            <motion.div 
+                            <motion.div
                                 className="absolute inset-0 bg-rose-400/5"
                                 initial={{ scaleX: 0 }}
                                 animate={{ scaleX: 1 }}

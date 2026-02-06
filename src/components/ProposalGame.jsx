@@ -7,7 +7,7 @@ const conversations = [
     { question: "Tumhe likhne ka shouk hai?", yesResponse: "Apne naam ke saath mera naam likh lo..." },
     { question: "Tumhe dekhne ka shouk hai?", yesResponse: "Mere saath jawaani se budhapa dekh lo..." },
     { question: "Tumhe samajhne ka shouk hai?", yesResponse: "Mujhse behtar nahi milega, samajh lo..." },
-    { question: "Tumhe sunne ka shouk hai?", yesResponse: "Meri dhadkan sun lo, tumhara naam leti hai..." },
+    { question: "Tumhe sunne ka shouk hai?", yesResponse: "Meri dhadkan sun lo, tumhara naam leta hai..." },
     { question: "Tumhe jeene ka shouk hai?", yesResponse: "Mere saath jee lo, jannat ban jayegi..." },
     { question: "Tumhe chahne ka shouk hai?", yesResponse: "Mujhe chaho, main tumhe poori duniya dunga..." },
 ];
