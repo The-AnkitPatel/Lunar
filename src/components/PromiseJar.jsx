@@ -1,118 +1,216 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useLoveContext } from '../hooks/useLoveContext';
 import { promiseSlips } from '../data/gameData';
+import { useLoveContext } from '../hooks/useLoveContext';
 
 export default function PromiseJar() {
-  const { claimedPromises, claimPromise, showRomanticToast } = useLoveContext();
-  const [currentPromise, setCurrentPromise] = useState(null);
-  const [isPicking, setIsPicking] = useState(false);
+    const { claimedPromises, claimPromise } = useLoveContext();
+    const [selectedPromise, setSelectedPromise] = useState(null);
+    const [isShaking, setIsShaking] = useState(false);
+    const [, setUnfoldingId] = useState(null);
+    const [showFulfilled, setShowFulfilled] = useState(false);
+    const [fulfilledPromises, setFulfilledPromises] = useState(() => {
+        const saved = localStorage.getItem('fulfilledPromises');
+        return saved ? JSON.parse(saved) : [];
+    });
 
-  const pickPromise = () => {
-    if (isPicking) return;
+    useEffect(() => {
+        localStorage.setItem('fulfilledPromises', JSON.stringify(fulfilledPromises));
+    }, [fulfilledPromises]);
 
-    const available = promiseSlips.filter(p => !claimedPromises.includes(p.id));
-    
-    if (available.length === 0) {
-      showRomanticToast('love');
-      return;
-    }
+    const unclaimed = promiseSlips.filter(p => !claimedPromises.includes(p.id));
+    const claimed = promiseSlips.filter(p => claimedPromises.includes(p.id));
 
-    setIsPicking(true);
-    setCurrentPromise(null);
+    // Jar fill level
+    const fillPercent = Math.max(0, ((promiseSlips.length - claimedPromises.length) / promiseSlips.length) * 100);
 
-    setTimeout(() => {
-      const random = available[Math.floor(Math.random() * available.length)];
-      setCurrentPromise(random);
-      showRomanticToast('promisePick');
-      setIsPicking(false);
-    }, 1500);
-  };
+    const handleShake = () => {
+        if (unclaimed.length === 0) return;
+        setIsShaking(true);
+        setTimeout(() => {
+            const random = unclaimed[Math.floor(Math.random() * unclaimed.length)];
+            setSelectedPromise(random);
+            setIsShaking(false);
+        }, 1000);
+    };
 
-  const handleClaim = () => {
-    if (currentPromise) {
-      claimPromise(currentPromise.id);
-      setTimeout(() => setCurrentPromise(null), 500);
-    }
-  };
+    const handleClaim = () => {
+        if (!selectedPromise) return;
+        setUnfoldingId(selectedPromise.id);
+        setTimeout(() => {
+            claimPromise(selectedPromise.id);
+            setUnfoldingId(null);
+        }, 600);
+    };
 
-  return (
-    <div className="bg-white/5 rounded-2xl p-5 border border-white/10">
-      <div className="text-center mb-4">
-        <span className="inline-block text-xs bg-pink-500/20 text-pink-400 px-2.5 py-1 rounded-full mb-2">📜 Promise Jar</span>
-        <p className="text-white/50 text-xs mb-1">Pick a promise from our special jar!</p>
-        <span className="text-xs text-pink-400/60">Claimed: {claimedPromises.length} / {promiseSlips.length}</span>
-      </div>
+    const toggleFulfill = (id) => {
+        setFulfilledPromises(prev => 
+            prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
+        );
+    };
 
-      {/* Jar */}
-      <div 
-        className="relative mx-auto w-40 cursor-pointer"
-        onClick={pickPromise}
-      >
-        {/* Lid */}
-        <div className="w-24 h-6 mx-auto bg-gradient-to-r from-pink-600 to-pink-500 rounded-t-lg border-2 border-pink-400/50" />
-        
-        {/* Jar Body */}
-        <div className="relative w-full h-44 bg-white/10 rounded-b-3xl border-2 border-white/20 overflow-hidden">
-          {/* Label */}
-          <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-white/20 px-3 py-1 rounded text-xs text-white/80">
-            Promises 💕
-          </div>
-          
-          {/* Papers */}
-          <div className="absolute inset-0 top-10">
-            {[...Array(6)].map((_, i) => (
-              <motion.div
-                key={i}
-                className="absolute w-8 h-4 bg-gradient-to-r from-pink-200 to-pink-100 rounded-sm shadow-sm"
-                style={{
-                  left: `${20 + (i % 3) * 25}%`,
-                  top: `${20 + Math.floor(i / 3) * 35}%`,
-                }}
-                animate={{ y: [0, -5, 0], rotate: [0, 5, 0] }}
-                transition={{ duration: 2 + i * 0.3, repeat: Infinity }}
-              />
-            ))}
-          </div>
+    return (
+        <div className="space-y-5">
+            <div className="text-center">
+                <h3 className="text-white font-semibold mb-1">Promise Jar 🏺</h3>
+                <p className="text-white/40 text-xs">
+                    Shake to pick a promise! {unclaimed.length} left in the jar
+                </p>
+            </div>
 
-          {/* Picking animation */}
-          {isPicking && (
-            <motion.div 
-              className="absolute inset-0 flex items-center justify-center text-3xl"
-              animate={{ scale: [1, 1.2, 1] }}
-              transition={{ duration: 0.5, repeat: Infinity }}
+            {/* Visual Jar */}
+            <div className="flex justify-center">
+                <motion.div 
+                    className="relative w-40 h-48"
+                    animate={isShaking ? { 
+                        rotate: [0, -8, 8, -8, 8, -4, 4, 0],
+                        x: [0, -5, 5, -5, 5, -2, 2, 0]
+                    } : {}}
+                    transition={{ duration: 0.8 }}
+                >
+                    {/* Jar body */}
+                    <div className="absolute bottom-0 w-full h-40 rounded-b-3xl rounded-t-lg border-2 border-amber-400/30 bg-amber-900/10 overflow-hidden">
+                        {/* Fill level */}
+                        <motion.div 
+                            className="absolute bottom-0 w-full bg-gradient-to-t from-love-500/30 to-love-400/10"
+                            animate={{ height: `${fillPercent}%` }}
+                            transition={{ duration: 0.5 }}
+                        />
+                        
+                        {/* Paper slips inside */}
+                        {unclaimed.length > 0 && (
+                            <div className="absolute inset-0 flex flex-wrap items-end justify-center gap-0.5 p-2">
+                                {unclaimed.slice(0, 12).map((_, i) => (
+                                    <motion.div
+                                        key={i}
+                                        className="w-5 h-3 rounded-sm bg-amber-200/40"
+                                        style={{ rotate: `${(i * 17) % 40 - 20}deg` }}
+                                        animate={isShaking ? { 
+                                            y: [0, -10, 5, -5, 0],
+                                            rotate: [`${(i * 17) % 40 - 20}deg`, `${(i * 17) % 40 + 10}deg`, `${(i * 17) % 40 - 20}deg`]
+                                        } : {}}
+                                    />
+                                ))}
+                            </div>
+                        )}
+
+                        {unclaimed.length === 0 && (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                                <p className="text-white/20 text-xs">Empty!</p>
+                            </div>
+                        )}
+                    </div>
+                    
+                    {/* Jar lid */}
+                    <div className="absolute top-0 w-full h-8 bg-amber-700/40 rounded-t-xl border-2 border-amber-400/30 flex items-center justify-center">
+                        <div className="w-8 h-2 rounded-full bg-amber-400/30" />
+                    </div>
+                </motion.div>
+            </div>
+
+            {/* Shake Button */}
+            <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={handleShake}
+                disabled={unclaimed.length === 0 || isShaking}
+                className={`w-full py-4 rounded-xl text-white font-medium transition-all ${
+                    unclaimed.length === 0
+                        ? 'bg-gray-600/50 cursor-not-allowed opacity-50'
+                        : 'bg-gradient-to-r from-amber-500 to-love-500 shadow-lg shadow-love-500/20 active:scale-95'
+                }`}
             >
-              🤚✨
-            </motion.div>
-          )}
+                {isShaking ? '🫨 Shaking...' : unclaimed.length > 0 ? '🤞 Shake the Jar' : 'All Promises Claimed!'}
+            </motion.button>
+
+            {/* Selected Promise Card */}
+            <AnimatePresence>
+                {selectedPromise && !claimedPromises.includes(selectedPromise.id) && (
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.5, rotateX: 90 }}
+                        animate={{ opacity: 1, scale: 1, rotateX: 0 }}
+                        exit={{ opacity: 0, scale: 0.8, rotateX: -90 }}
+                        transition={{ type: 'spring', damping: 15, stiffness: 200 }}
+                        className="p-6 rounded-2xl bg-gradient-to-br from-amber-500/20 to-love-500/20 border border-amber-400/30 text-center"
+                    >
+                        <div className="text-3xl mb-3">{selectedPromise.icon}</div>
+                        <p className="text-white text-lg font-medium leading-relaxed mb-4">
+                            {selectedPromise.promise}
+                        </p>
+                        <div className="grid grid-cols-2 gap-3">
+                            <button
+                                onClick={() => setSelectedPromise(null)}
+                                className="py-2.5 rounded-xl bg-white/10 text-white/60 text-sm"
+                            >
+                                Put Back
+                            </button>
+                            <motion.button
+                                whileTap={{ scale: 0.95 }}
+                                onClick={handleClaim}
+                                className="py-2.5 rounded-xl bg-gradient-to-r from-love-500 to-purple-600 text-white font-medium text-sm shadow-lg"
+                            >
+                                Claim This! 💕
+                            </motion.button>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Toggle View */}
+            {claimed.length > 0 && (
+                <button
+                    onClick={() => setShowFulfilled(!showFulfilled)}
+                    className="w-full py-2 rounded-lg text-white/40 text-xs hover:text-white/60 transition-colors"
+                >
+                    {showFulfilled ? 'Hide' : 'Show'} Claimed Promises ({claimed.length})
+                </button>
+            )}
+
+            {/* Claimed Promises with Fulfillment Tracker */}
+            <AnimatePresence>
+                {showFulfilled && claimed.length > 0 && (
+                    <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="space-y-2 overflow-hidden"
+                    >
+                        <p className="text-white/30 text-xs text-center mb-2">
+                            Tap to mark as fulfilled ✓
+                        </p>
+                        {claimed.map(p => {
+                            const isFulfilled = fulfilledPromises.includes(p.id);
+                            return (
+                                <motion.button
+                                    key={p.id}
+                                    layout
+                                    onClick={() => toggleFulfill(p.id)}
+                                    className={`w-full p-3 rounded-xl border text-left flex items-center gap-3 transition-all ${
+                                        isFulfilled
+                                            ? 'bg-green-500/10 border-green-500/20'
+                                            : 'bg-white/5 border-white/10 hover:bg-white/8'
+                                    }`}
+                                >
+                                    <span className="text-xl">{p.icon}</span>
+                                    <span className={`flex-1 text-xs leading-relaxed ${isFulfilled ? 'text-green-300/60 line-through' : 'text-white/60'}`}>
+                                        {p.promise}
+                                    </span>
+                                    <span className={`text-sm ${isFulfilled ? 'text-green-400' : 'text-white/20'}`}>
+                                        {isFulfilled ? '✓' : '○'}
+                                    </span>
+                                </motion.button>
+                            );
+                        })}
+
+                        {/* Fulfillment Progress */}
+                        <div className="p-3 rounded-xl bg-white/5 border border-white/5 text-center">
+                            <p className="text-white/40 text-xs">
+                                {fulfilledPromises.length} of {claimed.length} promises fulfilled 
+                                {fulfilledPromises.length === claimed.length && claimed.length > 0 && ' — You keep every promise! 🥰'}
+                            </p>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
-        
-        <p className="text-center text-xs text-white/40 mt-2 animate-pulse">
-          {isPicking ? 'Picking...' : 'Tap to pick!'}
-        </p>
-      </div>
-
-      {/* Picked Promise */}
-      <AnimatePresence>
-        {currentPromise && (
-          <motion.div
-            className="mt-4 p-4 bg-gradient-to-br from-pink-500/20 to-purple-500/20 rounded-xl border border-pink-400/30 text-center"
-            initial={{ opacity: 0, scale: 0.8, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-          >
-            <span className="text-3xl block mb-2">{currentPromise.icon}</span>
-            <h3 className="text-pink-400 font-semibold text-sm mb-1">{currentPromise.title}</h3>
-            <p className="text-white/70 text-xs mb-3">{currentPromise.promise}</p>
-            <button
-              className="px-5 py-2 bg-gradient-to-r from-pink-500 to-pink-600 rounded-full text-xs font-semibold active:scale-95 transition-transform"
-              onClick={handleClaim}
-            >
-              Claim Promise 💕
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
+    );
 }

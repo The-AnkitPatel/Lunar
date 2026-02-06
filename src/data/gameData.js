@@ -5,70 +5,128 @@ export const loveQuizQuestions = [
         question: "What date did we officially become a couple? 💕",
         options: ["January 10, 2026", "January 12, 2026", "January 15, 2026", "February 14, 2026"],
         correctAnswer: 1,
-        loveMessage: "Yes! January 12, 2026 - The day my world became complete! 💕"
+        loveMessage: "Yes! January 12, 2026 - The day I proposed and you said yes! 💕",
+        storyHint: "The day I proposed and everything changed forever..."
     },
     {
         id: 2,
-        question: "How long did I wait for you to say yes? 🥺",
+        question: "How long did I try to win your heart? 🥺",
         options: ["6 months", "1 year", "2 years", "3 years"],
         correctAnswer: 2,
-        loveMessage: "2 beautiful years of hoping and dreaming - and it was worth every second! ❤️"
+        loveMessage: "2 years of trying, hoping, and never giving up — and it was worth every second! ❤️",
+        storyHint: "Patience is the purest form of love..."
     },
     {
         id: 3,
         question: "What's the one thing I love most about you? 🌟",
         options: ["Your smile", "Your laugh", "Your heart", "Everything!"],
         correctAnswer: 3,
-        loveMessage: "Trick question - I love EVERYTHING about you! 🥰"
+        loveMessage: "Trick question - I love EVERYTHING about you! 🥰",
+        storyHint: "How can I pick one when everything about you is perfect?"
     },
     {
         id: 4,
         question: "What would I do without you? 🤔",
         options: ["Be fine", "Miss you a little", "Be lost forever", "I can't even imagine"],
         correctAnswer: 3,
-        loveMessage: "I literally cannot imagine my life without you. You ARE my life! 💖"
+        loveMessage: "I literally cannot imagine my life without you. You ARE my life! 💖",
+        storyHint: "Before you, I was surviving. Now I'm living."
     },
     {
         id: 5,
         question: "How much do I love you? 💗",
         options: ["A lot", "More than pizza", "To infinity", "Beyond infinity and back"],
         correctAnswer: 3,
-        loveMessage: "Beyond infinity and back... and then some more! 🚀💕"
+        loveMessage: "Beyond infinity and back... and then some more! 🚀💕",
+        storyHint: "If love could be measured, they'd need a new unit for us."
+    },
+    {
+        id: 6,
+        question: "Who proposed first? 😏",
+        options: ["She proposed to me", "I proposed to her", "We both said it together", "It just happened magically"],
+        correctAnswer: 1,
+        loveMessage: "I finally gathered all my courage and proposed! And she said YES! 💍",
+        storyHint: "January 12, 2026 — the bravest, sweetest moment..."
+    },
+    {
+        id: 7,
+        question: "What's the first thing I want to do when we meet? 🥺",
+        options: ["Say hi casually", "Shake hands", "Hug you so tight you can't breathe", "Stare at you and cry happy tears"],
+        correctAnswer: 2,
+        loveMessage: "I'll hold you so tight that the whole world will disappear! 🤗💕",
+        storyHint: "The distance makes the heart grow fonder..."
+    },
+    {
+        id: 8,
+        question: "What type of relationship do we have? 💕",
+        options: ["Regular relationship", "Long Distance Relationship", "Friendship", "It's complicated"],
+        correctAnswer: 1,
+        loveMessage: "LDR — but distance means nothing when someone means everything! 🌍❤️",
+        storyHint: "Miles apart but hearts always together..."
+    },
+    {
+        id: 9,
+        question: "What's my favorite thing about talking to you? 💭",
+        options: ["Your jokes", "Your voice", "The way you understand me", "Everything about our conversations"],
+        correctAnswer: 3,
+        loveMessage: "Everything about our conversations is magical! I never want them to end! ✨",
+        storyHint: "Late night talks that feel like they last 5 minutes..."
+    },
+    {
+        id: 10,
+        question: "If I could give you one thing in the world, what would it be? 🎁",
+        options: ["A diamond ring", "A trip around the world", "My heart forever", "The entire universe"],
+        correctAnswer: 2,
+        loveMessage: "My heart is already yours! It has been since the moment I fell for you! 💝",
+        storyHint: "There's nothing more valuable than a heart that beats for you..."
     }
 ];
 
 // Spin Wheel Love Messages
 export const wheelMessages = [
-    { text: "Close your eyes & imagine hugging me 🤗", color: "#E63946" },
-    { text: "Send a flying kiss video 😘", color: "#FF6B6B" },
-    { text: "Text me the thing you miss most �", color: "#C21E56" },
-    { text: "Dedicate a romantic song to me 🎵", color: "#FF69B4" },
-    { text: "Close your eyes & imagine hugging me 🤗", color: "#D4AF37" },
-    { text: "Send a flying kiss video �", color: "#FFB6C1" },
-    { text: "Text me the thing you miss most �", color: "#9B59B6" },
-    { text: "Dedicate a romantic song to me 🎵", color: "#3498DB" }
+    { text: "Close your eyes & imagine hugging me for 1 minute 🤗", icon: "🤗", category: "romantic" },
+    { text: "Send a flying kiss video right now! 😘", icon: "😘", category: "fun" },
+    { text: "Text me the thing you miss most about me 💭", icon: "💭", category: "sweet" },
+    { text: "Dedicate a song to me & send link 🎵", icon: "🎵", category: "romantic" },
+    { text: "Record a voice note saying 'I love you' in 3 different ways 💕", icon: "🎤", category: "fun" },
+    { text: "Write a 4-line shayari/poem about us right now ✍️", icon: "✍️", category: "creative" },
+    { text: "Tell me your favorite dream about us 🌙", icon: "🌙", category: "sweet" },
+    { text: "Send me your cutest selfie making a heart 📸", icon: "📸", category: "fun" }
 ];
 
-// Memory Game Cards
+// Spin Wheel Categories
+export const wheelCategories = [
+    { id: 'all', label: '🎲 Mix', color: 'from-pink-500 to-purple-500' },
+    { id: 'romantic', label: '💕 Romantic', color: 'from-rose-500 to-red-500' },
+    { id: 'fun', label: '🎉 Fun', color: 'from-amber-500 to-orange-500' },
+    { id: 'sweet', label: '🍬 Sweet', color: 'from-pink-400 to-pink-600' },
+    { id: 'creative', label: '✨ Creative', color: 'from-purple-500 to-indigo-500' },
+];
+
+// Memory Game Cards - Each pair represents a meaningful moment
 export const memoryCards = [
-    { id: 1, emoji: "💕", matched: false },
-    { id: 2, emoji: "💖", matched: false },
-    { id: 3, emoji: "💗", matched: false },
-    { id: 4, emoji: "💓", matched: false },
-    { id: 5, emoji: "💝", matched: false },
-    { id: 6, emoji: "❤️", matched: false }
+    { id: 1, emoji: "☕", matched: false, memory: "Our first late night conversation" },
+    { id: 2, emoji: "📱", matched: false, memory: "The first text that started it all" },
+    { id: 3, emoji: "🌙", matched: false, memory: "Those 2 AM calls we never wanted to end" },
+    { id: 4, emoji: "💍", matched: false, memory: "January 12 — the day I proposed" },
+    { id: 5, emoji: "🎵", matched: false, memory: "Our song that makes my heart race" },
+    { id: 6, emoji: "✈️", matched: false, memory: "The distance that makes us stronger" },
+    { id: 7, emoji: "😊", matched: false, memory: "Her laugh — the most beautiful sound" },
+    { id: 8, emoji: "💌", matched: false, memory: "Love letters & long messages" }
 ];
 
-// Love Facts for reveal cards
+// Love Facts for reveal cards — "Open When" letters
 export const loveFacts = [
-    "I think about you approximately 1000 times a day 💭",
-    "Your smile is my favorite notification 📱💕",
-    "Being with you feels like coming home 🏠❤️",
-    "You make ordinary moments feel extraordinary ✨",
-    "I fall more in love with you every single day 📈💗",
-    "You're my favorite hello and hardest goodbye 👋💔",
-    "In a room full of people, I'd still choose you 👥💕",
-    "You're the reason I believe in magic ✨🪄"
+    { text: "I think about you approximately 1000 times a day 💭", envelope: "Open when you miss me", seal: "💭" },
+    { text: "Your smile is my favorite notification — my heart jumps every time 📱💕", envelope: "Open when you feel alone", seal: "📱" },
+    { text: "Being with you feels like coming home, even across all these miles 🏠❤️", envelope: "Open when the distance hurts", seal: "🏠" },
+    { text: "You make ordinary moments feel extraordinary — even a simple text from you changes my whole day ✨", envelope: "Open when you need a smile", seal: "✨" },
+    { text: "I fall more in love with you every single day. It shouldn't be possible, but it is 📈💗", envelope: "Open when you doubt us", seal: "💗" },
+    { text: "You're my favorite hello and hardest goodbye. But soon, there won't be goodbyes 👋💕", envelope: "Open when you can't sleep", seal: "🌙" },
+    { text: "In a world full of people, across all this distance, my heart still found you. That's not luck — that's destiny 💕", envelope: "Open when you feel unlucky", seal: "🍀" },
+    { text: "You're the reason I believe in magic — because how else do you explain what I feel for you? ✨🪄", envelope: "Open when you need magic", seal: "🪄" },
+    { text: "I can't hold your hand yet, but I'm holding your heart. Always. 🤝💖", envelope: "Open when you want a hug", seal: "🤗" },
+    { text: "The day we finally meet, I'm not letting go. Not for a second. 🥺💕", envelope: "Open when you daydream about us", seal: "💫" }
 ];
 
 // ============================================
@@ -76,76 +134,75 @@ export const loveFacts = [
 // ============================================
 export const loveCoupons = [
     {
-        id: 1,
-        icon: "🎬",
-        title: "Movie Night Pass",
-        description: "One free movie night with your choice of film, snacks, and unlimited cuddles!"
+        id: 1, icon: "🎬", title: "Movie Night Pass", category: "fun",
+        description: "One free movie night with your choice of film, snacks, and unlimited virtual cuddles!",
+        expiry: "March 14, 2026"
     },
     {
-        id: 2,
-        icon: "🍳",
-        title: "Breakfast in Bed",
-        description: "Wake up to your favorite breakfast served with love in bed!"
+        id: 2, icon: "🍳", title: "Breakfast in Bed", category: "pampering",
+        description: "When we meet — wake up to your favorite breakfast served with love!",
+        expiry: "December 31, 2026"
     },
     {
-        id: 3,
-        icon: "💆",
-        title: "30-Min Massage",
-        description: "A relaxing 30-minute massage to melt all your stress away!"
+        id: 3, icon: "💆", title: "30-Min Massage", category: "pampering",
+        description: "When we meet — a relaxing 30-minute massage to melt all your stress away!",
+        expiry: "December 31, 2026"
     },
     {
-        id: 4,
-        icon: "🏆",
-        title: "Win Any Argument",
-        description: "Use this coupon to instantly win any argument. No questions asked!"
+        id: 4, icon: "🏆", title: "Win Any Argument", category: "fun",
+        description: "Use this coupon to instantly win any argument. No questions asked!",
+        expiry: "March 14, 2026"
     },
     {
-        id: 5,
-        icon: "🤗",
-        title: "10-Min Cuddle Session",
-        description: "Redeem for an uninterrupted 10-minute cuddle session on demand!"
+        id: 5, icon: "🤗", title: "Unlimited Hugs Day", category: "romantic",
+        description: "When we meet — an entire day of unlimited hugs on demand!",
+        expiry: "December 31, 2026"
     },
     {
-        id: 6,
-        icon: "🍕",
-        title: "Order Anything",
-        description: "Order any food you want, and I'll pay for it! No budget limits!"
+        id: 6, icon: "🍕", title: "Order Anything", category: "food",
+        description: "Order any food you want, and I'll pay for it! No budget limits!",
+        expiry: "March 31, 2026"
     },
     {
-        id: 7,
-        icon: "📱",
-        title: "Full Attention Day",
-        description: "One full day of my complete attention - no phone, no distractions!"
+        id: 7, icon: "📱", title: "Full Attention Day", category: "romantic",
+        description: "One full day of my complete attention - no phone, no distractions!",
+        expiry: "March 14, 2026"
     },
     {
-        id: 8,
-        icon: "🎁",
-        title: "Surprise Gift",
-        description: "Redeem for a surprise gift that I'll get you within 48 hours!"
+        id: 8, icon: "🎁", title: "Surprise Gift", category: "romantic",
+        description: "Redeem for a surprise gift that I'll get you within 48 hours!",
+        expiry: "April 30, 2026"
     },
     {
-        id: 9,
-        icon: "🚗",
-        title: "Date Night Driver",
-        description: "I'll plan and drive us to a surprise date location!"
+        id: 9, icon: "🎧", title: "Song Dedication", category: "romantic",
+        description: "I'll find the perfect song that describes my feelings and send it with a voice note explaining why!",
+        expiry: "March 14, 2026"
     },
     {
-        id: 10,
-        icon: "😘",
-        title: "100 Kisses",
-        description: "Exactly 100 kisses delivered throughout the day!"
+        id: 10, icon: "😘", title: "100 Kisses", category: "romantic",
+        description: "When we meet — exactly 100 kisses delivered throughout the day!",
+        expiry: "December 31, 2026"
     },
     {
-        id: 11,
-        icon: "📝",
-        title: "Love Letter",
-        description: "A handwritten love letter expressing my deepest feelings!"
+        id: 11, icon: "📝", title: "Handwritten Love Letter", category: "romantic",
+        description: "A handwritten love letter expressing my deepest feelings — mailed to you!",
+        expiry: "March 31, 2026"
     },
     {
-        id: 12,
-        icon: "👑",
-        title: "Queen for a Day",
-        description: "You're the queen! I'll do whatever you say for an entire day!"
+        id: 12, icon: "👑", title: "Queen for a Day", category: "pampering",
+        description: "You're the queen! I'll do whatever you say for an entire day!",
+        expiry: "March 14, 2026"
+    },
+    {
+        id: 13, icon: "📞", title: "Midnight Call", category: "romantic",
+        description: "I'll stay up and call you at midnight to tell you how much I love you!",
+        expiry: "March 14, 2026"
+    },
+    {
+        id: 14, icon: "🌟", title: "Secret Coupon", category: "secret",
+        description: "✨ The ULTIMATE coupon ✨\nAsk for ANYTHING. No limits. No rules. This is yours.",
+        expiry: "Forever",
+        isSecret: true
     }
 ];
 
@@ -339,18 +396,19 @@ export const scavengerHuntClues = [
 // SCRATCH CARD MESSAGES
 // ============================================
 export const scratchMessages = [
-    { id: 1, icon: "💕", message: "You are the most beautiful person in my world" },
-    { id: 2, icon: "✨", message: "Every moment with you is magical" },
-    { id: 3, icon: "🌙", message: "I dream about you even when I'm awake" },
-    { id: 4, icon: "💖", message: "My heart beats differently when you're near" },
-    { id: 5, icon: "🌹", message: "You make me want to be a better person" },
-    { id: 6, icon: "🦋", message: "You still give me butterflies every day" },
-    { id: 7, icon: "💫", message: "I fall in love with you more each second" },
-    { id: 8, icon: "🔥", message: "You're the fire that keeps my soul warm" },
-    { id: 9, icon: "🌈", message: "You're my sunshine after every storm" },
-    { id: 10, icon: "💝", message: "Choosing you will always be my best decision" },
-    { id: 11, icon: "🌺", message: "Life bloomed when you entered it" },
-    { id: 12, icon: "⭐", message: "You're my favorite star in the universe" }
+    { id: 1, icon: "💕", message: "You are the most beautiful person in my world", rarity: "common" },
+    { id: 2, icon: "✨", message: "Every moment with you is magical, even through a screen", rarity: "common" },
+    { id: 3, icon: "🌙", message: "I dream about you even when I'm awake — you live in my thoughts 24/7", rarity: "common" },
+    { id: 4, icon: "💖", message: "My heart beats differently when your name pops up on my phone", rarity: "common" },
+    { id: 5, icon: "🌹", message: "You make me want to be the best version of myself — for you, for us", rarity: "common" },
+    { id: 6, icon: "🦋", message: "You still give me butterflies every single day. How is that even possible?", rarity: "common" },
+    { id: 7, icon: "💫", message: "I fall in love with you more each second — it's honestly unfair", rarity: "common" },
+    { id: 8, icon: "🔥", message: "Even across all these miles, you're the fire that keeps my soul warm", rarity: "common" },
+    { id: 9, icon: "🌈", message: "You're my sunshine after every storm. I'd be lost in the dark without you.", rarity: "common" },
+    { id: 10, icon: "💝", message: "Choosing to wait for you will always be my best decision", rarity: "common" },
+    { id: 11, icon: "🌺", message: "Life bloomed when you entered it — before you, everything was black and white", rarity: "rare" },
+    { id: 12, icon: "⭐", message: "You're my favorite star in the universe — and I'll spend forever reaching for you", rarity: "rare" },
+    { id: 13, icon: "👑", message: "🌟 GOLDEN CARD 🌟\n\nYou found the rarest card! Here's your special reward: I promise to make your FIRST meeting with me the most unforgettable day of your life. Mark my words. ❤️", rarity: "golden" },
 ];
 
 // ============================================
@@ -359,34 +417,55 @@ export const scratchMessages = [
 export const timelineMilestones = [
     {
         id: 1,
-        date: "2 Years Before",
-        title: "The Beginning of Hope",
-        description: "I first started falling for you... and the waiting began 💕",
-        icon: "💫"
+        date: "Class 4",
+        title: "Where It All Began",
+        description: "We met in class 4, two kids who had no idea what the future held 💫",
+        icon: "🏫"
     },
     {
         id: 2,
-        date: "January 12, 2026",
-        title: "You Said Yes! 💕",
-        description: "The most beautiful day of my life. You finally said yes and made all my dreams come true!",
-        icon: "💍"
+        date: "Class 9",
+        title: "Separated By Distance",
+        description: "I left the school in class 9 and moved to a new one — but some connections are meant to last.",
+        icon: "✈️"
     },
     {
         id: 3,
+        date: "After JEE Advanced",
+        title: "Found You Again",
+        description: "After my JEE Advanced exam, I saw her on Instagram. Something clicked, and I started falling for her all over again 💕",
+        icon: "📱"
+    },
+    {
+        id: 4,
+        date: "2 Years of Trying",
+        title: "Never Gave Up",
+        description: "She initially refused, but I never stopped trying. 2 years of patience, hope, and unwavering love 💪",
+        icon: "💫"
+    },
+    {
+        id: 5,
+        date: "January 12, 2026",
+        title: "I Proposed & She Said Yes! 💕",
+        description: "The most beautiful day of my life. I finally proposed and she said yes! All the waiting was worth it!",
+        icon: "💍"
+    },
+    {
+        id: 6,
         date: "February 7, 2026",
         title: "Our First Rose Day",
         description: "Celebrating our first Valentine's week together as a couple! 🌹",
         icon: "🌹"
     },
     {
-        id: 4,
+        id: 7,
         date: "February 14, 2026",
         title: "First Valentine's Day",
         description: "Our very first Valentine's Day as a couple! Making it unforgettable! ❤️",
         icon: "❤️"
     },
     {
-        id: 5,
+        id: 8,
         date: "The Future",
         title: "Forever Together",
         description: "Every day with you is a new milestone worth celebrating! 💕",
@@ -415,3 +494,215 @@ export const dailyMessages = {
     5: "Finally Friday! Weekend plans with you? 🎉",
     6: "Saturday vibes: Every moment with you is perfect! ✨"
 };
+
+// ============================================
+// LOVE LANGUAGE TEST
+// ============================================
+export const loveLanguageQuestions = [
+    {
+        id: 1,
+        question: "After a long, tiring day in our LDR, what would make you happiest?",
+        options: [
+            { text: "A long voice note telling me how proud they are of me", type: "words" },
+            { text: "Them ordering food delivery to my door as a surprise", type: "gifts" },
+            { text: "A 2-hour video call just being together", type: "quality" },
+            { text: "Them doing something for me I didn't even ask for (like editing my photos)", type: "acts" },
+        ]
+    },
+    {
+        id: 2,
+        question: "Which gesture from your partner would melt your heart the most?",
+        options: [
+            { text: "Writing me a long paragraph about why they love me", type: "words" },
+            { text: "Planning a virtual movie date with everything ready", type: "quality" },
+            { text: "Sending me a surprise care package in the mail", type: "gifts" },
+            { text: "Staying up late to help me with something stressful", type: "acts" },
+        ]
+    },
+    {
+        id: 3,
+        question: "When we finally meet in person, I'd want my partner to...",
+        options: [
+            { text: "Hug me tight and not let go for 5 minutes", type: "touch" },
+            { text: "Look into my eyes and say everything they've been holding back", type: "words" },
+            { text: "Have a whole day planned just for us", type: "quality" },
+            { text: "Bring a handmade gift or letter they prepared for months", type: "gifts" },
+        ]
+    },
+    {
+        id: 4,
+        question: "What makes you feel most loved in daily life?",
+        options: [
+            { text: "Good morning & goodnight texts without fail", type: "words" },
+            { text: "Them remembering small things I mentioned and acting on them", type: "acts" },
+            { text: "Surprise gifts or recommendations they thought of me for", type: "gifts" },
+            { text: "Them making time for me even when they're busy", type: "quality" },
+        ]
+    },
+    {
+        id: 5,
+        question: "When I'm feeling low, what helps the most?",
+        options: [
+            { text: "Hearing 'I'm here, I'm not going anywhere'", type: "words" },
+            { text: "A surprise video call just to see my face", type: "quality" },
+            { text: "Them handling something for me so I don't have to worry", type: "acts" },
+            { text: "Receiving something cute — a meme, a drawing, a small gift", type: "gifts" },
+        ]
+    },
+    {
+        id: 6,
+        question: "What's your dream way to spend a free afternoon together?",
+        options: [
+            { text: "Deep conversation about our dreams and fears", type: "quality" },
+            { text: "Trading compliments and writing love notes to each other", type: "words" },
+            { text: "Cuddling on a cozy couch doing absolutely nothing", type: "touch" },
+            { text: "Cooking together or doing something as a team", type: "acts" },
+        ]
+    },
+    {
+        id: 7,
+        question: "What hurts most when your partner forgets to do it?",
+        options: [
+            { text: "Say 'I love you' or compliment me", type: "words" },
+            { text: "Spend dedicated time with just me", type: "quality" },
+            { text: "Do something thoughtful without being asked", type: "acts" },
+            { text: "Remember special dates or give me small tokens of love", type: "gifts" },
+        ]
+    },
+    {
+        id: 8,
+        question: "How would you show YOUR love to your partner?",
+        options: [
+            { text: "Write them poems, letters, and tell them they're beautiful", type: "words" },
+            { text: "Plan elaborate surprises and dates", type: "quality" },
+            { text: "Buy or make meaningful gifts they'd treasure", type: "gifts" },
+            { text: "Take care of their problems, even mundane ones", type: "acts" },
+        ]
+    },
+];
+
+export const loveLanguageResults = {
+    words: {
+        title: "Words of Affirmation 💌",
+        emoji: "💌",
+        description: "You feel most loved when your partner expresses their love through words — compliments, love letters, voice notes, and heartfelt messages. In your LDR, those 'I love you' texts aren't just words — they're your lifeline.",
+        tip: "Keep sending those long paragraphs! They mean the world to each other. 💕"
+    },
+    quality: {
+        title: "Quality Time ⏰",
+        emoji: "⏰",
+        description: "Nothing matters more than undivided attention. Video calls, watching movies together, or even comfortable silence on call — being truly PRESENT is your love language. Distance is hard, but your time together is sacred.",
+        tip: "Schedule regular date nights — even virtual ones count as real quality time! 🌙"
+    },
+    gifts: {
+        title: "Receiving Gifts 🎁",
+        emoji: "🎁",
+        description: "It's not about price tags — it's about the thought behind it. A surprise delivery, a handmade letter in the mail, or even a meme that says 'this reminded me of you' makes your heart sing.",
+        tip: "Surprise each other with small, thoughtful gestures regularly! 📦"
+    },
+    acts: {
+        title: "Acts of Service 🛠️",
+        emoji: "🛠️",
+        description: "Actions speak louder than words for you. When your partner goes out of their way to help you, support you, or make your life easier — THAT's when you feel the love deepest.",
+        tip: "Show love by solving problems for your partner before they even ask! 💪"
+    },
+    touch: {
+        title: "Physical Touch 🤗",
+        emoji: "🤗",
+        description: "The hardest love language in an LDR. You crave the warmth of your partner — hugs, holding hands, being close. The anticipation of your first real embrace keeps your heart racing.",
+        tip: "Until you meet: send virtual hugs, watch ASMR together, and plan that first hug! 🤗"
+    }
+};
+
+// ============================================
+// COUPLES PLAYLIST
+// ============================================
+export const playlistSuggestions = [
+    { title: "Perfect", artist: "Ed Sheeran", emoji: "💕", mood: "romantic" },
+    { title: "All of Me", artist: "John Legend", emoji: "💗", mood: "romantic" },
+    { title: "Thinking Out Loud", artist: "Ed Sheeran", emoji: "🎶", mood: "romantic" },
+    { title: "A Thousand Years", artist: "Christina Perri", emoji: "⏳", mood: "romantic" },
+    { title: "Tum Hi Ho", artist: "Arijit Singh", emoji: "🌹", mood: "bollywood" },
+    { title: "Raabta", artist: "Arijit Singh", emoji: "🔗", mood: "bollywood" },
+    { title: "Tera Ban Jaunga", artist: "Akhil Sachdeva", emoji: "💍", mood: "bollywood" },
+    { title: "Hawayein", artist: "Arijit Singh", emoji: "🌬️", mood: "bollywood" },
+    { title: "Pehla Nasha", artist: "Udit Narayan", emoji: "🦋", mood: "bollywood" },
+    { title: "Tere Bina", artist: "A.R. Rahman", emoji: "💔", mood: "bollywood" },
+    { title: "Photograph", artist: "Ed Sheeran", emoji: "📸", mood: "romantic" },
+    { title: "Just the Way You Are", artist: "Bruno Mars", emoji: "✨", mood: "romantic" },
+    { title: "Can't Help Falling in Love", artist: "Elvis Presley", emoji: "🎵", mood: "classic" },
+    { title: "Make You Feel My Love", artist: "Adele", emoji: "💝", mood: "classic" },
+    { title: "Something Just Like This", artist: "Coldplay", emoji: "🌟", mood: "modern" },
+    { title: "Lover", artist: "Taylor Swift", emoji: "🏠", mood: "modern" },
+];
+
+// ============================================
+// DREAM DATE PLANNER
+// ============================================
+export const dreamDateOptions = {
+    locations: [
+        { id: 1, icon: "🏖️", label: "Beach at Sunset", vibe: "romantic" },
+        { id: 2, icon: "🏔️", label: "Mountain Cabin", vibe: "cozy" },
+        { id: 3, icon: "🌃", label: "City Rooftop", vibe: "fancy" },
+        { id: 4, icon: "🏠", label: "Cozy Home", vibe: "intimate" },
+        { id: 5, icon: "🌸", label: "Cherry Blossom Park", vibe: "dreamy" },
+        { id: 6, icon: "🎡", label: "Carnival / Fair", vibe: "fun" },
+    ],
+    activities: [
+        { id: 1, icon: "🍳", label: "Cook Together", vibe: "intimate" },
+        { id: 2, icon: "💃", label: "Slow Dance", vibe: "romantic" },
+        { id: 3, icon: "🎬", label: "Watch Movie Together", vibe: "cozy" },
+        { id: 4, icon: "⭐", label: "Stargazing", vibe: "dreamy" },
+        { id: 5, icon: "🎨", label: "Paint Each Other", vibe: "fun" },
+        { id: 6, icon: "📸", label: "Photo Walk", vibe: "fun" },
+    ],
+    foods: [
+        { id: 1, icon: "🍕", label: "Pizza & Chill", vibe: "casual" },
+        { id: 2, icon: "🍰", label: "Desserts & Sweets", vibe: "sweet" },
+        { id: 3, icon: "🍷", label: "Fancy Dinner", vibe: "fancy" },
+        { id: 4, icon: "🍜", label: "Street Food", vibe: "adventurous" },
+        { id: 5, icon: "☕", label: "Coffee Date", vibe: "cozy" },
+        { id: 6, icon: "🍫", label: "Chocolate Fondue", vibe: "romantic" },
+    ],
+    times: [
+        { id: 1, icon: "🌅", label: "Sunrise", vibe: "peaceful" },
+        { id: 2, icon: "☀️", label: "Afternoon", vibe: "bright" },
+        { id: 3, icon: "🌇", label: "Sunset / Golden Hour", vibe: "romantic" },
+        { id: 4, icon: "🌙", label: "Midnight", vibe: "intimate" },
+    ],
+};
+
+export const dreamDateResponses = [
+    "This is literally the perfect date! I can already imagine us there... 💕",
+    "Omg YES! Let's add this to our bucket list right now! 📝",
+    "You have the most romantic imagination ever. I love you! 😍",
+    "I'm saving this. When we finally meet, this is happening! 🤞💕",
+    "My heart just skipped a beat imagining this with you... 💗",
+];
+
+// ============================================
+// LOVE MAP - Meaningful locations
+// ============================================
+export const loveMapLocations = [
+    { id: 1, icon: "📱", title: "Where it all started", description: "Found her on Instagram after JEE Advanced — and my world changed forever", tag: "origin", color: "#ec4899" },
+    { id: 2, icon: "💕", title: "Where she lives", description: "Where my heart actually is (because it's with her)", tag: "her", color: "#ef4444" },
+    { id: 3, icon: "🏠", title: "Where I live", description: "Where I am, counting days until we meet", tag: "me", color: "#8b5cf6" },
+    { id: 4, icon: "💍", title: "Where I proposed", description: "January 12, 2026 — over a call, but felt like she was right here", tag: "proposal", color: "#f59e0b" },
+    { id: 5, icon: "✈️", title: "Where we'll meet", description: "The place our LDR becomes real. The most anticipated moment of my life.", tag: "future", color: "#10b981" },
+    { id: 6, icon: "🌙", title: "Under the same moon", description: "Wherever we both are, we look at the same sky. That connects us.", tag: "always", color: "#6366f1" },
+];
+
+// ============================================
+// COUNTDOWN DATA
+// ============================================
+export const countdownEvents = [
+    { id: 1, icon: "🌹", name: "Rose Day", date: "2026-02-07", passed: false },
+    { id: 2, icon: "💍", name: "Propose Day", date: "2026-02-08", passed: false },
+    { id: 3, icon: "🍫", name: "Chocolate Day", date: "2026-02-09", passed: false },
+    { id: 4, icon: "🧸", name: "Teddy Day", date: "2026-02-10", passed: false },
+    { id: 5, icon: "🤞", name: "Promise Day", date: "2026-02-11", passed: false },
+    { id: 6, icon: "🤗", name: "Hug Day", date: "2026-02-12", passed: false },
+    { id: 7, icon: "😘", name: "Kiss Day", date: "2026-02-13", passed: false },
+    { id: 8, icon: "❤️", name: "Valentine's Day", date: "2026-02-14", passed: false },
+    { id: 9, icon: "💕", name: "1 Month Anniversary", date: "2026-02-12", passed: false },
+];

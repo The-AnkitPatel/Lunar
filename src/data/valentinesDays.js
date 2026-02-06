@@ -16,8 +16,8 @@ export const valentinesDays = [
         icon: "💍",
         className: "propose-day",
         title: "Will You Stay Forever? 💍",
-        message: "I know you already said yes, and I know we've been through so much together. But honestly? I want to ask you again today, and I'll probably ask you every year. Kyuki tumhara haan sunna mere liye duniya ki sabse badi khushi hai.\n\nI don't need a fancy ring or a grand gesture to show you how much you mean to me. I just need your hand in mine, through the good days and the messy ones. Tum mere liye sirf ek choice nahi ho, tum mera sukoon ho. Will you stay mine, forever?",
-        quote: "Log kehte hain pyaar ek baar hota hai, par mujhe tumse har din naya pyaar hota hai. I love you more than yesterday but less then Tomorrow!",
+        message: "I remember the day I finally said what my heart had been screaming for 2 years. January 12, 2026 — the day I proposed and you said YES.\n\nWe started as classmates in 4th class, got separated in 9th, and the universe brought us back together through Instagram after JEE Advanced. I gave you hints, you refused, but I never stopped trying. 2 years of patience, hope, and love.\n\nAnd now? I'd propose to you again today, tomorrow, and every single day. Kyuki tumhara haan sunna mere liye duniya ki sabse badi khushi hai.\n\nI don't need a fancy ring or a grand gesture. I just need your hand in mine, through the good days and the messy ones. Tum mere liye sirf ek choice nahi ho, tum mera sukoon ho. Will you stay mine, forever?",
+        quote: "Log kehte hain pyaar ek baar hota hai, par mujhe tumse har din naya pyaar hota hai. I love you more than yesterday but less than Tomorrow!",
         signature: "Only yours 💕"
     },
     {

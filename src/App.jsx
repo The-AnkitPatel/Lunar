@@ -17,6 +17,8 @@ import TruthOrLove from './components/TruthOrLove';
 import WouldYouRather from './components/WouldYouRather';
 import CompleteSentence from './components/CompleteSentence';
 import ProposalGame from './components/ProposalGame';
+import LoveMap from './components/LoveMap';
+import DreamDatePlanner from './components/DreamDatePlanner';
 import { valentinesDays } from './data/valentinesDays';
 
 // All features unlocked - Each day has a unique game to bring you closer
@@ -29,6 +31,14 @@ const dayFeatures = [
   { day: 12, id: 'hug', name: 'Hug Day', icon: '🤗', component: 'coupons', description: 'Love coupons' },
   { day: 13, id: 'kiss', name: 'Kiss Day', icon: '😘', component: 'scratch', description: 'Scratch cards' },
   { day: 14, id: 'valentine', name: "Valentine's", icon: '❤️', component: 'letter', description: 'Love letter' }
+];
+
+// Bonus games available anytime
+const bonusFeatures = [
+  { id: 'quiz', name: 'Love Quiz', icon: '🧠', component: 'quiz', description: 'How well do you know me?' },
+  { id: 'memory', name: 'Memory Game', icon: '🃏', component: 'memory', description: 'Match our memories' },
+  { id: 'lovemap', name: 'Love Map', icon: '🗺️', component: 'lovemap', description: 'Our story on a map' },
+  { id: 'dreamdate', name: 'Dream Date', icon: '🌹', component: 'dreamdate', description: 'Plan our perfect date' },
 ];
 
 function AppContent() {
@@ -64,6 +74,8 @@ function AppContent() {
       case 'coupons': return <LoveCoupons />;
       case 'scratch': return <ScratchCard />;
       case 'letter': return <LoveLetter />;
+      case 'lovemap': return <LoveMap />;
+      case 'dreamdate': return <DreamDatePlanner />;
       default: return null;
     }
   };
@@ -145,6 +157,39 @@ function AppContent() {
           </div>
         </motion.nav>
 
+        {/* Bonus Games Section */}
+        <motion.div
+          className="mb-6"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          <p className="text-white/30 text-xs font-medium mb-2 px-1">✨ Bonus Games</p>
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide snap-x snap-mandatory">
+            {bonusFeatures.map((feature, index) => (
+              <motion.button
+                key={feature.id}
+                onClick={() => {
+                  setActiveFeature(feature);
+                  setSelectedDayIndex(0);
+                }}
+                className={cn(
+                  "flex-shrink-0 snap-start flex flex-col items-center gap-1 p-3 min-w-[72px] rounded-xl border transition-all duration-200 active:scale-95",
+                  activeFeature?.id === feature.id
+                    ? "bg-gradient-to-br from-purple-500 to-indigo-600 border-purple-400 shadow-lg shadow-purple-500/25"
+                    : "bg-white/5 border-white/10 hover:bg-white/10"
+                )}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.15 + index * 0.03 }}
+              >
+                <span className="text-2xl">{feature.icon}</span>
+                <span className="text-[9px] text-white/70 whitespace-nowrap">{feature.name}</span>
+              </motion.button>
+            ))}
+          </div>
+        </motion.div>
+
         {/* Content Area */}
         <AnimatePresence mode="wait">
           {activeFeature ? (
@@ -156,10 +201,12 @@ function AppContent() {
               transition={{ duration: 0.2 }}
               className="space-y-6"
             >
-              {/* ALWAYS SHOW THE MESSAGE CARD FIRST */}
-              <DayCard dayData={currentDayData} />
+              {/* SHOW DAY CARD ONLY FOR VALENTINE WEEK FEATURES */}
+              {dayFeatures.some(f => f.id === activeFeature.id) && (
+                <DayCard dayData={currentDayData} />
+              )}
 
-              {/* Layout for Games/Interactive Content (Rendered BELOW the card) */}
+              {/* Layout for Games/Interactive Content */}
               {activeFeature.component !== 'day' && (
                 <section className="bg-white/5 backdrop-blur-sm rounded-2xl p-4 border border-white/10">
                   <div className="flex items-center gap-3 mb-4 p-3 bg-black/20 rounded-xl border border-white/5">
@@ -240,7 +287,7 @@ function AppContent() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 overflow-y-auto"
+              className="fixed inset-0 z-50 overflow-y-auto bg-gradient-to-b from-rose-950 via-slate-950 to-rose-950 p-4 pt-8"
             >
               <SecretGarden onClose={() => setSecretOpen(false)} />
             </motion.div>
