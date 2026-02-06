@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { dreamDateOptions, dreamDateResponses } from '../data/gameData';
+import { saveDreamDate } from '../lib/tracking';
 import { useAuth } from '../hooks/useAuth';
-import { saveGameResponse } from '../lib/tracking';
+import { dreamDateOptions, dreamDateResponses } from '../data/gameData';
 
 const steps = ['location', 'activity', 'food', 'time', 'details'];
 const stepLabels = {
@@ -10,7 +10,7 @@ const stepLabels = {
     activity: { title: 'What?', subtitle: 'What should we do?', icon: '🎯' },
     food: { title: 'Eat?', subtitle: 'What sounds yummy?', icon: '🍽️' },
     time: { title: 'When?', subtitle: 'Pick the vibe', icon: '🕐' },
-    details: { title: 'Final Touch', subtitle: 'Send me the plan', icon: '💌' },
+    details: { title: 'Final Touch', subtitle: 'Review our date', icon: '💌' },
 };
 
 
@@ -26,7 +26,6 @@ export default function DreamDatePlanner() {
     const [currentStep, setCurrentStep] = useState(0);
     const [selections, setSelections] = useState({});
     const [customInput, setCustomInput] = useState('');
-    const [email, setEmail] = useState('');
     const [showResult, setShowResult] = useState(false);
     const [submitting, setSubmitting] = useState(false);
 
@@ -66,31 +65,18 @@ export default function DreamDatePlanner() {
     };
 
     const handleFinish = async () => {
-        if (!email) return;
         setSubmitting(true);
 
         try {
-            const planDetails = `
-Date Plan:
-📍 Location: ${selections.location?.label}
-🎯 Activity: ${selections.activity?.label}
-🍽️ Food: ${selections.food?.label}
-🕐 Time: ${selections.time?.label}
+            // Using customInput from the final 'details' step as the comment
+            const comment = customInput;
 
-Email: ${email}
-            `.trim();
-
-            await saveGameResponse({
-                gameType: 'dream_date',
-                questionText: 'Dream Date Plan',
-                responseText: planDetails,
-                responseData: {
-                    location: selections.location?.label,
-                    activity: selections.activity?.label,
-                    food: selections.food?.label,
-                    time: selections.time?.label,
-                    email
-                }
+            await saveDreamDate({
+                location: selections.location,
+                activity: selections.activity,
+                food: selections.food,
+                time: selections.time,
+                comment: comment
             });
 
             setShowResult(true);
@@ -278,23 +264,77 @@ Email: ${email}
                     {/* Step Content */}
                     {step === 'details' ? (
                         <div className="bg-white/5 rounded-2xl p-6 border border-white/10 space-y-4">
+                            <h4 className="text-white text-md font-medium text-center mb-4">Review Our Dream Date 💕</h4>
+
+                            {/* Summary Grid */}
+                            <div className="grid grid-cols-2 gap-3 mb-4">
+                                <div className="p-3 bg-white/5 rounded-xl border border-white/10 flex flex-col items-center text-center">
+                                    <span className="text-2xl mb-1">{selections.location?.icon}</span>
+                                    <span className="text-white/80 text-xs">{selections.location?.label}</span>
+                                    <button
+                                        onClick={() => setCurrentStep(0)}
+                                        className="text-[10px] text-rose-300 mt-1 hover:underline"
+                                    >
+                                        Change
+                                    </button>
+                                </div>
+                                <div className="p-3 bg-white/5 rounded-xl border border-white/10 flex flex-col items-center text-center">
+                                    <span className="text-2xl mb-1">{selections.activity?.icon}</span>
+                                    <span className="text-white/80 text-xs">{selections.activity?.label}</span>
+                                    <button
+                                        onClick={() => setCurrentStep(1)}
+                                        className="text-[10px] text-rose-300 mt-1 hover:underline"
+                                    >
+                                        Change
+                                    </button>
+                                </div>
+                                <div className="p-3 bg-white/5 rounded-xl border border-white/10 flex flex-col items-center text-center">
+                                    <span className="text-2xl mb-1">{selections.food?.icon}</span>
+                                    <span className="text-white/80 text-xs">{selections.food?.label}</span>
+                                    <button
+                                        onClick={() => setCurrentStep(2)}
+                                        className="text-[10px] text-rose-300 mt-1 hover:underline"
+                                    >
+                                        Change
+                                    </button>
+                                </div>
+                                <div className="p-3 bg-white/5 rounded-xl border border-white/10 flex flex-col items-center text-center">
+                                    <span className="text-2xl mb-1">{selections.time?.icon}</span>
+                                    <span className="text-white/80 text-xs">{selections.time?.label}</span>
+                                    <button
+                                        onClick={() => setCurrentStep(3)}
+                                        className="text-[10px] text-rose-300 mt-1 hover:underline"
+                                    >
+                                        Change
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Comment Section */}
                             <div>
-                                <label className="block text-white/70 text-sm mb-2">Your Email</label>
-                                <input
-                                    type="email"
-                                    placeholder="Enter your email to save..."
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    className="w-full bg-black/20 border border-white/10 rounded-xl p-3 text-white placeholder-white/30 focus:outline-none focus:border-rose-500/50"
+                                <label className="block text-white/70 text-sm mb-2">Any special notes for me? (Optional)</label>
+                                <textarea
+                                    placeholder="Write a cute note..."
+                                    value={customInput} // reusing customInput state for comment in final step
+                                    onChange={(e) => setCustomInput(e.target.value)}
+                                    className="w-full bg-black/20 border border-white/10 rounded-xl p-3 text-white placeholder-white/30 focus:outline-none focus:border-rose-500/50 resize-none h-24"
                                 />
                             </div>
-                            <div className="pt-2">
+
+                            {/* Submit Button */}
+                            <div className="pt-2 flex gap-3">
+                                <button
+                                    onClick={resetPlanner} // Allows starting over completely
+                                    className="px-4 py-3 rounded-xl bg-white/5 text-white/60 hover:bg-white/10 text-sm font-medium transition-colors"
+                                >
+                                    Reset
+                                </button>
                                 <button
                                     onClick={handleFinish}
-                                    disabled={!email || submitting}
-                                    className="w-full py-3 rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                                    disabled={submitting}
+                                    className="flex-1 py-3 rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-rose-500/25 transition-all"
                                 >
-                                    {submitting ? 'Sending...' : 'Send My Plan 💌'}
+                                    {submitting ? 'Saving...' : 'Confirm & Save 💖'}
                                 </button>
                             </div>
                         </div>
@@ -347,7 +387,7 @@ Email: ${email}
                     )}
 
                     {/* Back button */}
-                    {currentStep > 0 && (
+                    {currentStep > 0 && step !== 'details' && (
                         <button
                             onClick={() => setCurrentStep(prev => prev - 1)}
                             className="w-full py-2 rounded-xl bg-white/5 text-white/40 text-sm hover:text-white/60 transition-colors"

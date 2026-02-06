@@ -160,3 +160,35 @@ export async function getGameResponses(gameType) {
         return [];
     }
 }
+
+/**
+ * Save a dream date plan
+ */
+export async function saveDreamDate({ location, activity, food, time, comment }) {
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return null;
+
+        const { data, error } = await supabase
+            .from('dream_dates')
+            .insert({
+                user_id: user.id,
+                location,
+                activity,
+                food,
+                time,
+                comment
+            })
+            .select()
+            .single();
+
+        if (error) {
+            console.error('Error saving dream date:', error);
+            return null;
+        }
+        return data;
+    } catch (err) {
+        console.error('Failed to save dream date:', err);
+        return null;
+    }
+}

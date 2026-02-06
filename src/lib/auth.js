@@ -11,13 +11,9 @@ export async function signIn(email, password) {
     const adminUser = "Ankit";
     const adminPass = "Ankit@Kajal#";
 
-    // Normalize input (case-insensitive check for her, exact for admin perhaps? User asked for admin credentials, usually admin is safer generally but let's stick to request)
-    // The user didn't explicitly say "case insensitive" for admin, but for consistency I will make username case insensitive and password exact-ish or just follow the same pattern if they want easy login.
-    // However, the request was "change admin login username and password as well", implying specific values. I'll do exact match for Admin password to be safe, or just follow the pattern. 
-    // Let's assume exact match for Admin Password as it looks complex.
-
-    // Email input "username@lunar.love"
     const inputUsername = email.split('@')[0];
+
+    let fakeSession = null;
 
     // Check GF (Case Insensitive)
     if (inputUsername.toLowerCase() === specialUser.toLowerCase() && password.toLowerCase() === specialPass.toLowerCase()) {
@@ -30,17 +26,16 @@ export async function signIn(email, password) {
             }
         };
 
-        // Log device info after successful login and get session ID
         const sessionId = await logDeviceInfo(fakeUser.id);
         if (sessionId) {
             localStorage.setItem('current_session_id', sessionId);
         }
 
-        return { user: fakeUser, session: { user: fakeUser } };
+        fakeSession = { user: fakeUser, access_token: 'fake-jwt', user_metadata: fakeUser.user_metadata };
     }
 
     // Check Admin (Case Insensitive Username, Exact Password)
-    if (inputUsername.toLowerCase() === adminUser.toLowerCase() && password === adminPass) {
+    else if (inputUsername.toLowerCase() === adminUser.toLowerCase() && password === adminPass) {
         const fakeAdmin = {
             id: "special-admin-id-" + Date.now(),
             email: "ankit@lunar.love",
@@ -50,13 +45,17 @@ export async function signIn(email, password) {
             }
         };
 
-        // Log device info after successful login and get session ID
         const sessionId = await logDeviceInfo(fakeAdmin.id);
         if (sessionId) {
             localStorage.setItem('current_session_id', sessionId);
         }
 
-        return { user: fakeAdmin, session: { user: fakeAdmin } };
+        fakeSession = { user: fakeAdmin, access_token: 'fake-admin-jwt', user_metadata: fakeAdmin.user_metadata };
+    }
+
+    if (fakeSession) {
+        localStorage.setItem('lunar_fake_session', JSON.stringify(fakeSession));
+        return { user: fakeSession.user, session: fakeSession };
     }
 
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -96,6 +95,9 @@ export async function signUp(email, password, displayName, role = 'gf') {
 
 // Sign out
 export async function signOut() {
+    // Clear fake session
+    localStorage.removeItem('lunar_fake_session');
+
     // Mark session inactive
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
@@ -115,9 +117,23 @@ export async function getCurrentProfile(userId = null) {
     let uid = userId;
 
     if (!uid) {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return null;
-        uid = user.id;
+        const session = await getSession();
+        if (session) {
+            uid = session.user.id;
+        } else {
+            return null;
+        }
+    }
+
+    // For fake users, return fake profile if logic matches
+    if (uid.startsWith('special-')) {
+        const fakeSession = JSON.parse(localStorage.getItem('lunar_fake_session'));
+        if (fakeSession && fakeSession.user.id === uid) {
+            return {
+                id: uid,
+                ...fakeSession.user.user_metadata
+            };
+        }
     }
 
     const { data: profile, error } = await supabase
@@ -186,6 +202,12 @@ export function onAuthStateChange(callback) {
 
 // Get session
 export async function getSession() {
+    // Check for fake session first
+    const fakeSessionStr = localStorage.getItem('lunar_fake_session');
+    if (fakeSessionStr) {
+        return JSON.parse(fakeSessionStr);
+    }
+
     const { data: { session } } = await supabase.auth.getSession();
     return session;
 }
