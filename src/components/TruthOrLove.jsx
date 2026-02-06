@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { saveGameResponse } from '../lib/tracking';
+import { saveGameResponse, getGameResponses } from '../lib/tracking';
 import GameReviewSection from './GameReviewSection';
 
 const truthQuestions = [
@@ -32,6 +32,14 @@ export default function TruthOrLove() {
     const [cardRevealed, setCardRevealed] = useState(false);
     const [savedResponses, setSavedResponses] = useState([]);
 
+    useEffect(() => {
+        const loadResponses = async () => {
+            const responses = await getGameResponses('truth_or_love');
+            setSavedResponses(responses);
+        };
+        loadResponses();
+    }, []);
+
 
     const currentItem = mode === 'truth' ? truthQuestions[truthIndex] : loveActions[loveIndex];
     const currentQuestion = typeof currentItem === 'string' ? currentItem : currentItem.text;
@@ -47,13 +55,21 @@ export default function TruthOrLove() {
         setTimeout(() => {
             setMode(type);
             setResponse('');
-            setIsCompleted(false);
-            setCardRevealed(false);
-            // Card flip reveal
-            setTimeout(() => {
-                setCardRevealed(true);
+
+            // Check if already played
+            const hasPlayed = savedResponses.some(r => r.responseData?.mode === type);
+            if (hasPlayed) {
+                setIsCompleted(true);
                 setIsFlipping(false);
-            }, 300);
+            } else {
+                setIsCompleted(false);
+                setCardRevealed(false);
+                // Card flip reveal
+                setTimeout(() => {
+                    setCardRevealed(true);
+                    setIsFlipping(false);
+                }, 300);
+            }
         }, 300);
     };
 
@@ -119,16 +135,28 @@ export default function TruthOrLove() {
 
     const handleSwitchToLove = () => {
         setMode('love');
-        setIsCompleted(false);
-        setResponse('');
-        setCardRevealed(true);
+        // Check if already played
+        const hasPlayed = savedResponses.some(r => r.responseData?.mode === 'love');
+        if (hasPlayed) {
+            setIsCompleted(true);
+        } else {
+            setIsCompleted(false);
+            setResponse('');
+            setCardRevealed(true);
+        }
     };
 
     const handleSwitchToTruth = () => {
         setMode('truth');
-        setIsCompleted(false);
-        setResponse('');
-        setCardRevealed(true);
+        // Check if already played
+        const hasPlayed = savedResponses.some(r => r.responseData?.mode === 'truth');
+        if (hasPlayed) {
+            setIsCompleted(true);
+        } else {
+            setIsCompleted(false);
+            setResponse('');
+            setCardRevealed(true);
+        }
     };
 
     return (
@@ -206,7 +234,7 @@ export default function TruthOrLove() {
 
                                 {mode === 'truth' ? (
                                     <button onClick={handleSwitchToLove} className="w-full py-4 rounded-xl text-white font-bold bg-gradient-to-r from-rose-500 to-red-600 shadow-lg shadow-rose-500/20 active:scale-95 transition-transform">
-                                        Play Love Mode Now! 💖
+                                        Ready for Romance? 💖
                                     </button>
                                 ) : (
                                     <button onClick={handleSwitchToTruth} className="w-full py-4 rounded-xl text-white font-bold bg-gradient-to-r from-blue-500 to-purple-600 shadow-lg shadow-purple-500/20 active:scale-95 transition-transform">

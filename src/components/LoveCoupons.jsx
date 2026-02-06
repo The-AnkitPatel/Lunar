@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { loveCoupons } from '../data/gameData';
 import { useLoveContext } from '../hooks/useLoveContext';
@@ -65,11 +66,10 @@ export default function LoveCoupons() {
                     <button
                         key={cat.key}
                         onClick={() => setActiveCategory(cat.key)}
-                        className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all border ${
-                            activeCategory === cat.key
-                                ? 'bg-love-500/20 text-love-300 border-love-500/30'
-                                : 'bg-white/5 text-white/40 border-white/5 hover:bg-white/10'
-                        }`}
+                        className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all border ${activeCategory === cat.key
+                            ? 'bg-love-500/20 text-love-300 border-love-500/30'
+                            : 'bg-white/5 text-white/40 border-white/5 hover:bg-white/10'
+                            }`}
                     >
                         {cat.icon} {cat.label}
                     </button>
@@ -89,21 +89,20 @@ export default function LoveCoupons() {
                                 key={coupon.id}
                                 layout
                                 initial={{ opacity: 0, y: 20 }}
-                                animate={{ 
-                                    opacity: isTearing ? 0 : 1, 
+                                animate={{
+                                    opacity: isTearing ? 0 : 1,
                                     y: 0,
                                     scale: isTearing ? 0.8 : 1,
                                     rotate: isTearing ? 5 : 0,
                                 }}
                                 exit={{ opacity: 0, scale: 0.8 }}
                                 transition={{ duration: isTearing ? 0.8 : 0.3, delay: isTearing ? 0 : i * 0.05 }}
-                                className={`relative rounded-2xl overflow-hidden border ${
-                                    isSecret 
-                                        ? 'bg-gradient-to-r from-amber-500/20 via-yellow-500/20 to-amber-500/20 border-amber-400/30' 
-                                        : isRedeemed
-                                            ? 'bg-white/3 border-white/5'
-                                            : 'bg-gradient-to-r from-love-500/10 to-purple-500/10 border-love-500/20'
-                                }`}
+                                className={`relative rounded-2xl overflow-hidden border ${isSecret
+                                    ? 'bg-gradient-to-r from-amber-500/20 via-yellow-500/20 to-amber-500/20 border-amber-400/30'
+                                    : isRedeemed
+                                        ? 'bg-white/3 border-white/5'
+                                        : 'bg-gradient-to-r from-love-500/10 to-purple-500/10 border-love-500/20'
+                                    }`}
                             >
                                 {/* Perforated edge */}
                                 <div className="absolute left-0 top-0 bottom-0 w-0.5 flex flex-col justify-around py-2">
@@ -114,9 +113,8 @@ export default function LoveCoupons() {
 
                                 <div className="pl-4 pr-4 py-4 flex items-start gap-3">
                                     {/* Icon */}
-                                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl flex-shrink-0 ${
-                                        isSecret ? 'bg-amber-400/20' : isRedeemed ? 'bg-white/5' : 'bg-love-500/10'
-                                    }`}>
+                                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl flex-shrink-0 ${isSecret ? 'bg-amber-400/20' : isRedeemed ? 'bg-white/5' : 'bg-love-500/10'
+                                        }`}>
                                         {coupon.icon}
                                     </div>
 
@@ -152,11 +150,10 @@ export default function LoveCoupons() {
                                             <motion.button
                                                 whileTap={{ scale: 0.9 }}
                                                 onClick={() => handleRedeem(coupon)}
-                                                className={`px-3 py-1.5 rounded-lg text-[10px] font-medium border transition-colors ${
-                                                    isSecret 
-                                                        ? 'bg-amber-500/20 text-amber-300 border-amber-500/30 hover:bg-amber-500/30'
-                                                        : 'bg-love-500/20 text-love-300 border-love-500/30 hover:bg-love-500/30'
-                                                }`}
+                                                className={`px-3 py-1.5 rounded-lg text-[10px] font-medium border transition-colors ${isSecret
+                                                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/30 hover:bg-amber-500/30'
+                                                    : 'bg-love-500/20 text-love-300 border-love-500/30 hover:bg-love-500/30'
+                                                    }`}
                                             >
                                                 Redeem
                                             </motion.button>
@@ -180,7 +177,7 @@ export default function LoveCoupons() {
 
             {/* Secret coupon teaser */}
             {!secretUnlocked && (
-                <motion.div 
+                <motion.div
                     animate={{ opacity: [0.5, 1, 0.5] }}
                     transition={{ duration: 3, repeat: Infinity }}
                     className="p-4 rounded-xl bg-amber-500/5 border border-amber-500/10 text-center"
@@ -192,42 +189,46 @@ export default function LoveCoupons() {
             )}
 
             {/* Confirm Modal */}
-            <AnimatePresence>
-                {showConfirm && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-6"
-                        onClick={() => setShowConfirm(null)}
-                    >
+            {createPortal(
+                <AnimatePresence>
+                    {showConfirm && (
                         <motion.div
-                            initial={{ scale: 0.8, y: 20 }}
-                            animate={{ scale: 1, y: 0 }}
-                            exit={{ scale: 0.8, y: 20 }}
-                            onClick={(e) => e.stopPropagation()}
-                            className="bg-gray-900 rounded-2xl p-6 border border-love-500/20 w-full max-w-sm"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-6"
+                            onClick={() => setShowConfirm(null)}
+                            style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
                         >
-                            <div className="text-center mb-4">
-                                <div className="text-4xl mb-3">{showConfirm.icon}</div>
-                                <h4 className="text-white font-bold text-lg">{showConfirm.title}</h4>
-                                <p className="text-white/50 text-sm mt-2">{showConfirm.description}</p>
-                            </div>
-                            <p className="text-amber-400/80 text-xs text-center mb-4">
-                                ⚠️ Once redeemed, this coupon can't be un-redeemed!
-                            </p>
-                            <div className="grid grid-cols-2 gap-3">
-                                <button onClick={() => setShowConfirm(null)} className="py-3 rounded-xl bg-white/10 text-white/70 text-sm">
-                                    Keep It
-                                </button>
-                                <button onClick={confirmRedeem} className="py-3 rounded-xl bg-gradient-to-r from-love-500 to-purple-600 text-white font-medium text-sm shadow-lg">
-                                    Redeem! 🎉
-                                </button>
-                            </div>
+                            <motion.div
+                                initial={{ scale: 0.8, y: 20 }}
+                                animate={{ scale: 1, y: 0 }}
+                                exit={{ scale: 0.8, y: 20 }}
+                                onClick={(e) => e.stopPropagation()}
+                                className="bg-gray-900 rounded-2xl p-6 border border-love-500/20 w-full max-w-sm"
+                            >
+                                <div className="text-center mb-4">
+                                    <div className="text-4xl mb-3">{showConfirm.icon}</div>
+                                    <h4 className="text-white font-bold text-lg">{showConfirm.title}</h4>
+                                    <p className="text-white/50 text-sm mt-2">{showConfirm.description}</p>
+                                </div>
+                                <p className="text-amber-400/80 text-xs text-center mb-4">
+                                    ⚠️ Once redeemed, this coupon can't be un-redeemed!
+                                </p>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <button onClick={() => setShowConfirm(null)} className="py-3 rounded-xl bg-white/10 text-white/70 text-sm">
+                                        Keep It
+                                    </button>
+                                    <button onClick={confirmRedeem} className="py-3 rounded-xl bg-gradient-to-r from-love-500 to-purple-600 text-white font-medium text-sm shadow-lg">
+                                        Redeem! 🎉
+                                    </button>
+                                </div>
+                            </motion.div>
                         </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+                    )}
+                </AnimatePresence>,
+                document.body
+            )}
         </div>
     );
 }
