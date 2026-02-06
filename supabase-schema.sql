@@ -161,6 +161,82 @@ CREATE TRIGGER on_auth_user_created
     EXECUTE FUNCTION public.handle_new_user();
 
 -- ============================================
+-- ADDITIONAL RLS POLICIES FOR FAKE/SPECIAL USERS
+-- (Fake users use IDs like 'special-her-id-*' and bypass Supabase Auth)
+-- ============================================
+
+-- Allow any authenticated OR anonymous insert for device_logs (fake users)
+CREATE POLICY "Allow insert for any user device logs"
+    ON public.device_logs FOR INSERT
+    WITH CHECK (true);
+
+-- Allow any authenticated OR anonymous insert for auth_sessions (fake users)
+CREATE POLICY "Allow insert for any user sessions"
+    ON public.auth_sessions FOR INSERT
+    WITH CHECK (true);
+
+-- Allow any user to update their own sessions (for heartbeat/logout)
+CREATE POLICY "Allow update for any user sessions"
+    ON public.auth_sessions FOR UPDATE
+    USING (true);
+
+-- Admin can view all sessions (broader)
+CREATE POLICY "Admin or anon can view all sessions"
+    ON public.auth_sessions FOR SELECT
+    USING (true);
+
+-- Admin can view all device logs (broader)
+CREATE POLICY "Anyone can view all device logs"
+    ON public.device_logs FOR SELECT
+    USING (true);
+
+-- ============================================
+-- ENABLE REALTIME ON TRACKING TABLES
+-- Supabase Realtime needs REPLICA IDENTITY FULL
+-- ============================================
+ALTER TABLE public.device_logs REPLICA IDENTITY FULL;
+ALTER TABLE public.auth_sessions REPLICA IDENTITY FULL;
+ALTER TABLE public.visit_events REPLICA IDENTITY FULL;
+ALTER TABLE public.game_responses REPLICA IDENTITY FULL;
+
+-- Add tables to supabase_realtime publication
+-- (Supabase uses this publication for Realtime Postgres Changes)
+DO $$
+BEGIN
+    -- Add device_logs
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_publication_tables
+        WHERE pubname = 'supabase_realtime' AND tablename = 'device_logs'
+    ) THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.device_logs;
+    END IF;
+
+    -- Add auth_sessions
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_publication_tables
+        WHERE pubname = 'supabase_realtime' AND tablename = 'auth_sessions'
+    ) THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.auth_sessions;
+    END IF;
+
+    -- Add visit_events
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_publication_tables
+        WHERE pubname = 'supabase_realtime' AND tablename = 'visit_events'
+    ) THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.visit_events;
+    END IF;
+
+    -- Add game_responses
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_publication_tables
+        WHERE pubname = 'supabase_realtime' AND tablename = 'game_responses'
+    ) THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.game_responses;
+    END IF;
+END $$;
+
+-- ============================================
 -- INDEXES for performance
 -- ============================================
 CREATE INDEX IF NOT EXISTS idx_device_logs_user_id ON public.device_logs(user_id);

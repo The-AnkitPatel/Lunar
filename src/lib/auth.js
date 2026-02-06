@@ -95,21 +95,33 @@ export async function signUp(email, password, displayName, role = 'gf') {
 
 // Sign out
 export async function signOut() {
-    // Clear fake session
-    localStorage.removeItem('lunar_fake_session');
-
-    // Mark session inactive
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
+    // Mark current session inactive in DB
+    const sessionId = localStorage.getItem('current_session_id');
+    if (sessionId) {
         await supabase
             .from('auth_sessions')
             .update({ is_active: false, logout_at: new Date().toISOString() })
-            .eq('user_id', user.id)
-            .eq('is_active', true);
+            .eq('id', sessionId);
     }
 
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
+    // Clear fake session & session tracking
+    localStorage.removeItem('lunar_fake_session');
+    localStorage.removeItem('current_session_id');
+
+    // Also try Supabase signout for real sessions
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+            await supabase
+                .from('auth_sessions')
+                .update({ is_active: false, logout_at: new Date().toISOString() })
+                .eq('user_id', user.id)
+                .eq('is_active', true);
+        }
+        await supabase.auth.signOut();
+    } catch (e) {
+        // Ignore — may be a fake user with no real Supabase session
+    }
 }
 
 // Get current user profile (with role)

@@ -2,6 +2,15 @@ import { useState, useEffect, useCallback } from 'react';
 import { AuthContext } from './authContext';
 import { getCurrentProfile, getSession, onAuthStateChange, signOut } from '../lib/auth';
 
+// Helper: check if a fake session exists in localStorage
+function getFakeSession() {
+    try {
+        const str = localStorage.getItem('lunar_fake_session');
+        if (str) return JSON.parse(str);
+    } catch { }
+    return null;
+}
+
 export function AuthProvider({ children }) {
     const [session, setSession] = useState(null);
     const [profile, setProfile] = useState(null);
@@ -38,13 +47,27 @@ export function AuthProvider({ children }) {
 
         init();
 
-        // Listen for auth changes
+        // Listen for Supabase auth changes
+        // IMPORTANT: For fake sessions (GF/Admin), Supabase fires with session=null.
+        // We must NOT clear state if a fake session exists in localStorage.
         const { data: { subscription } } = onAuthStateChange(async (newSession) => {
-            if (mounted) {
+            if (!mounted) return;
+
+            if (newSession) {
+                // Real Supabase session
                 setSession(newSession);
-                if (newSession) {
-                    await fetchProfile(newSession.user.id);
+                await fetchProfile(newSession.user.id);
+                setLoading(false);
+            } else {
+                // Supabase says no session — check if we have a fake session
+                const fake = getFakeSession();
+                if (fake) {
+                    // Keep the fake session alive, don't clear anything
+                    setSession(fake);
+                    await fetchProfile(fake.user.id);
                 } else {
+                    // Genuinely logged out
+                    setSession(null);
                     setProfile(null);
                 }
                 setLoading(false);

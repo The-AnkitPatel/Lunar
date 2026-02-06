@@ -28,17 +28,21 @@ export default function LockTimerModal({ unlockDate, onClose, dayName, message }
     }
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+        <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+            onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+        >
             <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
                 className="bg-slate-900/90 border border-rose-500/30 p-6 rounded-2xl max-w-sm w-full text-center shadow-2xl relative"
             >
-                {/* Close Button */}
+                {/* Close Button — Large touch target */}
                 <button
                     onClick={onClose}
-                    className="absolute top-2 right-2 text-white/50 hover:text-white p-2"
+                    className="absolute -top-2 -right-2 w-10 h-10 flex items-center justify-center rounded-full bg-slate-800 border border-white/20 text-white/70 hover:text-white hover:bg-slate-700 active:scale-90 transition-all shadow-lg text-lg z-10"
+                    aria-label="Close"
                 >
                     ✕
                 </button>

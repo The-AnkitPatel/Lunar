@@ -80,6 +80,8 @@ function AppContent() {
     }
     if (feature) {
       trackFeatureOpen(feature.component || feature.id);
+      // Push history state so back button closes the feature instead of leaving
+      window.history.pushState({ feature: feature.id }, '');
     }
     setActiveFeature(feature);
   };
@@ -90,6 +92,37 @@ function AppContent() {
 
   // Admin Dashboard State
   const [showAdminDashboard, setShowAdminDashboard] = useState(false);
+
+  // ── Global back button handler ──
+  // Prevents the browser back button from logging out / leaving the site.
+  // Instead it closes any open overlay/feature in this order:
+  //   AdminDashboard > SecretGarden > LockModal > ActiveFeature > stay on page
+  useEffect(() => {
+    // Push an initial history entry so there's always something to "go back" from
+    window.history.pushState({ app: true }, '');
+
+    const handlePopState = (e) => {
+      // Always re-push so we never actually navigate away
+      window.history.pushState({ app: true }, '');
+
+      if (showAdminDashboard) {
+        setShowAdminDashboard(false);
+      } else if (secretOpen) {
+        setSecretOpen(false);
+      } else if (showLockModal) {
+        setShowLockModal(false);
+      } else if (activeFeature) {
+        if (activeFeature) {
+          trackFeatureClose(activeFeature.component || activeFeature.id);
+        }
+        setActiveFeature(null);
+      }
+      // If nothing is open, just stay on the page (don't logout)
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [showAdminDashboard, secretOpen, showLockModal, activeFeature]);
 
   const currentDayData = valentinesDays[selectedDayIndex];
 

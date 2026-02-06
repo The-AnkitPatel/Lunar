@@ -1,9 +1,10 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const TABS = [
     { id: 'overview', label: 'Overview', icon: '📊' },
+    { id: 'live', label: 'Live', icon: '🔴' },
     { id: 'visits', label: 'Visits', icon: '👀' },
     { id: 'responses', label: 'Messages', icon: '💌' },
     { id: 'devices', label: 'Devices', icon: '📱' },
@@ -33,6 +34,21 @@ export default function AdminDashboard({ onClose }) {
     const [selectedResponse, setSelectedResponse] = useState(null);
     const [responseFilter, setResponseFilter] = useState('all');
     const [autoRefresh, setAutoRefresh] = useState(true);
+    const [liveNotifications, setLiveNotifications] = useState([]);
+    const [liveActivity, setLiveActivity] = useState([]); // Real-time activity feed
+    const notifIdRef = useRef(0);
+
+    // Add a live notification (auto-dismiss after 10s)
+    const addLiveNotification = useCallback((type, message, details = {}) => {
+        const id = ++notifIdRef.current;
+        const notif = { id, type, message, details, timestamp: new Date().toISOString() };
+        setLiveNotifications(prev => [notif, ...prev].slice(0, 20));
+        setLiveActivity(prev => [notif, ...prev].slice(0, 100));
+        // Auto-dismiss toast after 10s
+        setTimeout(() => {
+            setLiveNotifications(prev => prev.filter(n => n.id !== id));
+        }, 10000);
+    }, []);
 
     const fetchAllData = useCallback(async (showRefreshing = false) => {
         try {
@@ -85,26 +101,99 @@ export default function AdminDashboard({ onClose }) {
         return () => clearInterval(interval);
     }, [autoRefresh, fetchAllData]);
 
-    // Real-time subscription for new game responses
+    // ── Comprehensive Real-time subscriptions ──
+    // Listen to ALL tracking tables for instant updates
     useEffect(() => {
         const channel = supabase
-            .channel('admin-realtime')
+            .channel('admin-realtime-all')
+            // ── DEVICE LOGS: New device login detected ──
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'device_logs' }, (payload) => {
+                const log = payload.new;
+                setDeviceLogs(prev => [log, ...prev]);
+                addLiveNotification(
+                    'login',
+                    `📱 New device logged in!`,
+                    {
+                        device: log.device_type || 'unknown',
+                        browser: log.browser || 'unknown',
+                        os: log.os || 'unknown',
+                        ip: log.ip_address || 'unknown',
+                        fingerprint: log.fingerprint,
+                        screen: log.screen_resolution,
+                    }
+                );
+            })
+            // ── AUTH SESSIONS: New session created or updated ──
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'auth_sessions' }, (payload) => {
+                const sess = payload.new;
+                setSessions(prev => [sess, ...prev]);
+                addLiveNotification(
+                    'session',
+                    `🟢 New session started!`,
+                    { sessionId: sess.id, userId: sess.user_id }
+                );
+            })
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'auth_sessions' }, (payload) => {
+                const sess = payload.new;
+                setSessions(prev => prev.map(s => s.id === sess.id ? { ...s, ...sess } : s));
+                // If session became inactive (logout)
+                if (sess.is_active === false && payload.old?.is_active === true) {
+                    addLiveNotification(
+                        'logout',
+                        `🔴 Session ended (logged out)`,
+                        { sessionId: sess.id }
+                    );
+                }
+            })
+            // ── GAME RESPONSES: New or updated game answers ──
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'game_responses' }, (payload) => {
-                setGameResponses(prev => [payload.new, ...prev]);
+                const resp = payload.new;
+                setGameResponses(prev => [resp, ...prev]);
+                addLiveNotification(
+                    'game_response',
+                    `💌 New ${GAME_LABELS[resp.game_type] || resp.game_type} response!`,
+                    {
+                        gameType: resp.game_type,
+                        question: resp.question_text,
+                        answer: resp.response_text,
+                    }
+                );
             })
             .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'game_responses' }, (payload) => {
                 setGameResponses(prev => prev.map(r => r.id === payload.new.id ? { ...r, ...payload.new } : r));
+                if (payload.new.is_edited) {
+                    addLiveNotification(
+                        'game_edit',
+                        `✏️ Response was edited in ${GAME_LABELS[payload.new.game_type] || payload.new.game_type}`,
+                        { answer: payload.new.response_text }
+                    );
+                }
             })
+            // ── VISIT EVENTS: Page views, feature opens/closes ──
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'visit_events' }, (payload) => {
-                setVisitEvents(prev => [payload.new, ...prev]);
+                const event = payload.new;
+                setVisitEvents(prev => [event, ...prev]);
+                // Only notify for meaningful events
+                if (event.event_type === 'page_view') {
+                    addLiveNotification('page_view', `🏠 Opened the site!`, {});
+                } else if (event.event_type === 'feature_open') {
+                    addLiveNotification('feature_open', `▶️ Opened: ${event.feature_name}`, { feature: event.feature_name });
+                } else if (event.event_type === 'feature_close') {
+                    addLiveNotification('feature_close', `⏹️ Closed: ${event.feature_name}`, { feature: event.feature_name });
+                } else if (event.event_type === 'page_close') {
+                    addLiveNotification('page_close', `🚪 Left the site`, {});
+                } else if (event.event_type === 'tab_hidden') {
+                    addLiveNotification('tab_hidden', `👻 Switched away from tab`, {});
+                } else if (event.event_type === 'tab_visible') {
+                    addLiveNotification('tab_visible', `👁️ Came back to the tab`, {});
+                }
             })
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'auth_sessions' }, () => {
-                fetchAllData(true);
-            })
-            .subscribe();
+            .subscribe((status) => {
+                console.log('Admin realtime subscription status:', status);
+            });
 
         return () => { supabase.removeChannel(channel); };
-    }, [fetchAllData]);
+    }, [addLiveNotification]);
 
     // ── Derived Stats ──
     const gfSessions = sessions.filter(s => s.profiles?.role === 'gf');
@@ -236,6 +325,16 @@ export default function AdminDashboard({ onClose }) {
                                     visitEvents={visitEvents}
                                 />
                             )}
+                            {activeTab === 'live' && (
+                                <LiveTab
+                                    liveActivity={liveActivity}
+                                    liveNotifications={liveNotifications}
+                                    isOnlineNow={isOnlineNow}
+                                    visitEvents={visitEvents}
+                                    deviceLogs={deviceLogs}
+                                    sessions={sessions}
+                                />
+                            )}
                             {activeTab === 'visits' && (
                                 <VisitsTab sessions={gfSessions} />
                             )}
@@ -258,7 +357,195 @@ export default function AdminDashboard({ onClose }) {
                     </AnimatePresence>
                 )}
             </div>
+
+            {/* ── Floating Live Notification Toasts ── */}
+            <div className="fixed top-4 right-4 z-[60] flex flex-col gap-2 max-w-sm pointer-events-none">
+                <AnimatePresence>
+                    {liveNotifications.slice(0, 5).map((notif) => (
+                        <motion.div
+                            key={notif.id}
+                            initial={{ opacity: 0, x: 100, scale: 0.9 }}
+                            animate={{ opacity: 1, x: 0, scale: 1 }}
+                            exit={{ opacity: 0, x: 100, scale: 0.9 }}
+                            transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                            className={`pointer-events-auto rounded-xl px-4 py-3 shadow-2xl border backdrop-blur-md ${getNotifStyle(notif.type)}`}
+                        >
+                            <div className="flex items-start gap-2">
+                                <span className="text-base flex-shrink-0">{getNotifIcon(notif.type)}</span>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium text-white">{notif.message}</p>
+                                    {notif.details?.device && (
+                                        <p className="text-[10px] text-white/50 mt-0.5">
+                                            {notif.details.device} • {notif.details.browser} • {notif.details.os}
+                                            {notif.details.ip !== 'unknown' && ` • IP: ${notif.details.ip}`}
+                                        </p>
+                                    )}
+                                    {notif.details?.answer && (
+                                        <p className="text-[10px] text-white/50 mt-0.5 line-clamp-1">
+                                            "{notif.details.answer}"
+                                        </p>
+                                    )}
+                                    <p className="text-[9px] text-white/30 mt-1">
+                                        {new Date(notif.timestamp).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={() => setLiveNotifications(prev => prev.filter(n => n.id !== notif.id))}
+                                    className="text-white/30 hover:text-white/60 text-xs flex-shrink-0"
+                                >
+                                    ×
+                                </button>
+                            </div>
+                        </motion.div>
+                    ))}
+                </AnimatePresence>
+            </div>
         </motion.div>
+    );
+}
+
+// ═══════════════════════════════════════
+// LIVE TAB — Real-time Activity Feed
+// ═══════════════════════════════════════
+function LiveTab({ liveActivity, liveNotifications, isOnlineNow, visitEvents, deviceLogs, sessions }) {
+    // Determine what she's currently doing based on recent visit events
+    const recentFeatureEvents = visitEvents
+        .filter(e => e.event_type === 'feature_open' || e.event_type === 'feature_close')
+        .slice(0, 20);
+
+    // Find the currently open feature (last feature_open without a matching feature_close after it)
+    let currentlyViewing = null;
+    const openFeatures = new Set();
+    for (const event of recentFeatureEvents) {
+        if (event.event_type === 'feature_open') {
+            openFeatures.add(event.feature_name);
+            break; // Most recent open is what they're viewing
+        } else if (event.event_type === 'feature_close') {
+            openFeatures.delete(event.feature_name);
+        }
+    }
+    if (openFeatures.size > 0) {
+        currentlyViewing = [...openFeatures][0];
+    }
+
+    // Is she on the tab right now?
+    const lastTabEvent = visitEvents.find(e => e.event_type === 'tab_hidden' || e.event_type === 'tab_visible' || e.event_type === 'page_close');
+    const isTabActive = lastTabEvent?.event_type === 'tab_visible' || lastTabEvent?.event_type === 'page_view';
+
+    // Latest device used
+    const latestDevice = deviceLogs[0];
+
+    // Latest session
+    const latestSession = sessions.find(s => s.is_active);
+
+    return (
+        <div className="space-y-4">
+            {/* Live Status */}
+            <div className={`p-4 rounded-xl border flex items-center gap-3 ${
+                isOnlineNow
+                    ? 'bg-gradient-to-r from-green-500/20 to-emerald-500/20 border-green-500/30'
+                    : 'bg-gradient-to-r from-red-500/10 to-rose-500/10 border-red-500/20'
+            }`}>
+                <div className="relative">
+                    <span className="text-3xl">{isOnlineNow ? '💚' : '💤'}</span>
+                    {isOnlineNow && (
+                        <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-ping" />
+                    )}
+                </div>
+                <div>
+                    <p className={`font-medium text-sm ${isOnlineNow ? 'text-green-300' : 'text-red-300'}`}>
+                        {isOnlineNow ? "She's LIVE on the site!" : 'Currently offline'}
+                    </p>
+                    <p className={`text-xs ${isOnlineNow ? 'text-green-300/60' : 'text-red-300/40'}`}>
+                        {isOnlineNow
+                            ? (currentlyViewing ? `Currently viewing: ${currentlyViewing}` : (isTabActive ? 'Browsing the site' : 'Tab may be in background'))
+                            : 'Waiting for her to visit...'
+                        }
+                    </p>
+                </div>
+            </div>
+
+            {/* Currently Doing */}
+            {isOnlineNow && (
+                <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+                    <h3 className="text-white/80 text-xs uppercase tracking-wider mb-3 font-medium">🎯 Current Activity</h3>
+                    <div className="space-y-2">
+                        {currentlyViewing && (
+                            <div className="flex items-center gap-2 p-2 bg-rose-500/10 rounded-lg border border-rose-500/20">
+                                <span className="text-sm">▶️</span>
+                                <span className="text-rose-300 text-sm font-medium">Viewing: {currentlyViewing}</span>
+                            </div>
+                        )}
+                        {isTabActive !== undefined && (
+                            <div className="flex items-center gap-2 p-2 bg-white/5 rounded-lg">
+                                <span className="text-sm">{isTabActive ? '👁️' : '👻'}</span>
+                                <span className="text-white/60 text-sm">
+                                    Tab is {isTabActive ? 'active (focused)' : 'in background'}
+                                </span>
+                            </div>
+                        )}
+                        {latestDevice && (
+                            <div className="flex items-center gap-2 p-2 bg-white/5 rounded-lg">
+                                <span className="text-sm">{latestDevice.device_type === 'mobile' ? '📱' : '💻'}</span>
+                                <span className="text-white/60 text-sm">
+                                    Using: {latestDevice.browser} on {latestDevice.os}
+                                    {latestDevice.ip_address && latestDevice.ip_address !== 'unavailable' && ` (IP: ${latestDevice.ip_address})`}
+                                </span>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* Live Feed */}
+            <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+                <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-white/80 text-xs uppercase tracking-wider font-medium">📡 Live Feed</h3>
+                    <span className="flex items-center gap-1.5 text-[10px] text-green-400">
+                        <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                        Listening
+                    </span>
+                </div>
+                {liveActivity.length === 0 ? (
+                    <div className="text-center py-8">
+                        <span className="text-3xl block mb-2">📡</span>
+                        <p className="text-white/30 text-xs">Waiting for activity...</p>
+                        <p className="text-white/20 text-[10px] mt-1">Events will appear here in real-time when she uses the site</p>
+                    </div>
+                ) : (
+                    <div className="space-y-2 max-h-[50vh] overflow-y-auto">
+                        {liveActivity.map((event) => (
+                            <motion.div
+                                key={event.id}
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                className={`flex items-start gap-3 p-2.5 rounded-lg border transition-colors ${getLiveEventStyle(event.type)}`}
+                            >
+                                <span className="text-sm flex-shrink-0 mt-0.5">{getNotifIcon(event.type)}</span>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-white/80 text-xs font-medium">{event.message}</p>
+                                    {event.details?.device && (
+                                        <p className="text-white/40 text-[10px] mt-0.5">
+                                            {event.details.device} • {event.details.browser} • {event.details.os}
+                                            {event.details.screen && ` • ${event.details.screen}`}
+                                        </p>
+                                    )}
+                                    {event.details?.answer && (
+                                        <p className="text-white/40 text-[10px] mt-0.5 italic line-clamp-2">"{event.details.answer}"</p>
+                                    )}
+                                    {event.details?.question && (
+                                        <p className="text-white/30 text-[10px] mt-0.5">Q: {event.details.question}</p>
+                                    )}
+                                </div>
+                                <span className="text-white/20 text-[10px] flex-shrink-0">
+                                    {new Date(event.timestamp).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                                </span>
+                            </motion.div>
+                        ))}
+                    </div>
+                )}
+            </div>
+        </div>
     );
 }
 
@@ -795,5 +1082,66 @@ function getEventIcon(type) {
         case 'tab_visible': return '👁️';
         case 'page_close': return '🚪';
         default: return '📌';
+    }
+}
+
+// ── Notification helpers ──
+function getNotifIcon(type) {
+    switch (type) {
+        case 'login': return '📱';
+        case 'session': return '🟢';
+        case 'logout': return '🔴';
+        case 'game_response': return '💌';
+        case 'game_edit': return '✏️';
+        case 'page_view': return '🏠';
+        case 'feature_open': return '▶️';
+        case 'feature_close': return '⏹️';
+        case 'page_close': return '🚪';
+        case 'tab_hidden': return '👻';
+        case 'tab_visible': return '👁️';
+        default: return '📡';
+    }
+}
+
+function getNotifStyle(type) {
+    switch (type) {
+        case 'login':
+        case 'session':
+            return 'bg-green-500/20 border-green-500/30';
+        case 'logout':
+        case 'page_close':
+            return 'bg-red-500/20 border-red-500/30';
+        case 'game_response':
+        case 'game_edit':
+            return 'bg-rose-500/20 border-rose-500/30';
+        case 'feature_open':
+            return 'bg-blue-500/20 border-blue-500/30';
+        default:
+            return 'bg-white/10 border-white/20';
+    }
+}
+
+function getLiveEventStyle(type) {
+    switch (type) {
+        case 'login':
+        case 'session':
+            return 'bg-green-500/10 border-green-500/20';
+        case 'logout':
+        case 'page_close':
+            return 'bg-red-500/10 border-red-500/20';
+        case 'game_response':
+        case 'game_edit':
+            return 'bg-rose-500/10 border-rose-500/20';
+        case 'feature_open':
+            return 'bg-blue-500/10 border-blue-500/20';
+        case 'feature_close':
+            return 'bg-orange-500/10 border-orange-500/20';
+        case 'tab_hidden':
+            return 'bg-gray-500/10 border-gray-500/20';
+        case 'tab_visible':
+        case 'page_view':
+            return 'bg-emerald-500/10 border-emerald-500/20';
+        default:
+            return 'bg-white/5 border-white/10';
     }
 }
