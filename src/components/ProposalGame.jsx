@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const conversations = [
@@ -15,6 +15,8 @@ const conversations = [
 function TypewriterText({ text, onComplete }) {
   const [displayed, setDisplayed] = useState('');
   const [done, setDone] = useState(false);
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
 
   useEffect(() => {
     setDisplayed('');
@@ -27,11 +29,11 @@ function TypewriterText({ text, onComplete }) {
       } else {
         clearInterval(interval);
         setDone(true);
-        onComplete?.();
+        onCompleteRef.current?.();
       }
     }, 50);
     return () => clearInterval(interval);
-  }, [text, onComplete]);
+  }, [text]);
 
   return (
     <span>
@@ -173,7 +175,7 @@ export default function ProposalGame() {
 
                 <div className="mt-6 p-4 bg-white/5 rounded-xl border border-white/10">
                     <p className="text-white/40 text-xs">
-                        She proposed on <strong className="text-pink-400">January 12, 2026</strong> and I said yes without a second thought. 
+                        I proposed on <strong className="text-pink-400">January 12, 2026</strong> and she said yes! 
                         Best decision of my life. 💕
                     </p>
                 </div>

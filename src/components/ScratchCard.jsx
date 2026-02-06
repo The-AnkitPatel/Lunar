@@ -175,7 +175,7 @@ export default function ScratchCard() {
         )}
       </div>
 
-      <div className={`relative mx-auto w-72 h-44 rounded-xl overflow-hidden shadow-lg ${
+      <div className={`relative mx-auto w-full max-w-[280px] aspect-[16/10] rounded-xl overflow-hidden shadow-lg ${
         isGolden ? 'ring-2 ring-amber-400/50 shadow-amber-500/20' : 
         isRare ? 'ring-2 ring-purple-400/50 shadow-purple-500/20' : ''
       }`}>

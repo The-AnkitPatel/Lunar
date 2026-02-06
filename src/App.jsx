@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LoveProvider } from './context/LoveContext';
+import { AuthProvider } from './context/AuthProvider';
 import { useLoveContext } from './hooks/useLoveContext';
+import { useAuth } from './hooks/useAuth';
 import { cn } from './lib/utils';
+import AuthPage from './components/AuthPage';
 import DayCard from './components/DayCard';
 import LoveQuiz from './components/LoveQuiz';
 import MemoryGame from './components/MemoryGame';
@@ -43,21 +46,38 @@ const bonusFeatures = [
 
 function AppContent() {
   const { userName } = useLoveContext();
+  const { profile, isAdmin, isGf, signOut: handleSignOut } = useAuth();
   const [activeFeature, setActiveFeature] = useState(null);
   const [selectedDayIndex, setSelectedDayIndex] = useState(0);
   const [showSecret, setShowSecret] = useState(false);
   const [secretOpen, setSecretOpen] = useState(false);
   const currentDayData = valentinesDays[selectedDayIndex];
 
-  // Unlock secret after Feb 14th
+  // Check if a day is unlocked for the current user
+  // Admin: everything unlocked. GF: only if today's date >= that day's date
+  const isDayUnlocked = (dayNum) => {
+    if (isAdmin) return true;
+    const now = new Date();
+    const year = now.getFullYear();
+    // dayNum is the Feb date (7-14)
+    const unlockDate = new Date(year, 1, dayNum); // Feb = month 1
+    unlockDate.setHours(0, 0, 0, 0);
+    return now >= unlockDate;
+  };
+
+  // Unlock secret after Feb 14th or if Admin
   useEffect(() => {
+    if (isAdmin) {
+      setShowSecret(true);
+      return;
+    }
     const now = new Date();
     const unlockDate = new Date(now.getFullYear(), 1, 15); // Feb 15
     // For testing, uncomment: setShowSecret(true);
     if (now >= unlockDate) {
       setShowSecret(true);
     }
-  }, []);
+  }, [isAdmin]);
 
   const renderFeatureContent = () => {
     if (!activeFeature) return null;
@@ -102,8 +122,19 @@ function AppContent() {
             💕 Happy Valentine's Week
           </h1>
           <p className="text-white/60 text-sm mt-1">
-            Welcome, {userName} ✨
+            Welcome, {profile?.display_name || userName} ✨
           </p>
+          {isAdmin && (
+            <span className="inline-block mt-1 text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full border border-amber-500/30">
+              👑 Admin
+            </span>
+          )}
+          <button
+            onClick={handleSignOut}
+            className="block mx-auto mt-2 text-white/30 hover:text-white/60 text-xs transition-colors"
+          >
+            Sign Out
+          </button>
         </motion.header>
 
         {/* Day Navigation - Horizontal Scroll */}
@@ -114,28 +145,37 @@ function AppContent() {
           transition={{ delay: 0.1 }}
         >
           <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide snap-x snap-mandatory">
-            {dayFeatures.map((feature, index) => (
-              <motion.button
-                key={feature.id}
-                onClick={() => {
-                  setActiveFeature(feature);
-                  setSelectedDayIndex(index);
-                }}
-                className={cn(
-                  "flex-shrink-0 snap-start flex flex-col items-center gap-1 p-3 min-w-[72px] rounded-xl border transition-all duration-200 active:scale-95",
-                  activeFeature?.id === feature.id
-                    ? "bg-gradient-to-br from-rose-500 to-red-600 border-rose-400 shadow-lg shadow-rose-500/25"
-                    : "bg-white/5 border-white/10 hover:bg-white/10"
-                )}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: index * 0.03 }}
-              >
-                <span className="text-2xl">{feature.icon}</span>
-                <span className="text-[10px] text-white/50 font-medium">Feb {feature.day}</span>
-                <span className="text-[9px] text-white/70 whitespace-nowrap">{feature.name}</span>
-              </motion.button>
-            ))}
+            {dayFeatures.map((feature, index) => {
+              const unlocked = isDayUnlocked(feature.day);
+              return (
+                <motion.button
+                  key={feature.id}
+                  onClick={() => {
+                    if (!unlocked) return;
+                    setActiveFeature(feature);
+                    setSelectedDayIndex(index);
+                  }}
+                  disabled={!unlocked}
+                  className={cn(
+                    "flex-shrink-0 snap-start flex flex-col items-center gap-1 p-3 min-w-[72px] rounded-xl border transition-all duration-200",
+                    !unlocked
+                      ? "bg-white/[0.02] border-white/5 opacity-50 cursor-not-allowed"
+                      : activeFeature?.id === feature.id
+                        ? "bg-gradient-to-br from-rose-500 to-red-600 border-rose-400 shadow-lg shadow-rose-500/25"
+                        : "bg-white/5 border-white/10 hover:bg-white/10 active:scale-95"
+                  )}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: index * 0.03 }}
+                >
+                  <span className="text-2xl">{unlocked ? feature.icon : '🔒'}</span>
+                  <span className="text-[10px] text-white/50 font-medium">Feb {feature.day}</span>
+                  <span className="text-[9px] text-white/70 whitespace-nowrap">
+                    {unlocked ? feature.name : 'Locked'}
+                  </span>
+                </motion.button>
+              );
+            })}
 
             {/* SECRET GIFT ROW - Only visible after Valentine's Day */}
             {showSecret && (
@@ -306,11 +346,46 @@ function AppContent() {
   );
 }
 
-function App() {
+function AuthGate() {
+  const { isAuthenticated, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-rose-950 via-slate-950 to-rose-950 flex items-center justify-center">
+        <motion.div
+          className="text-center"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+        >
+          <motion.div
+            className="text-5xl mb-4"
+            animate={{ scale: [1, 1.2, 1], rotate: [0, 10, -10, 0] }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+          >
+            💕
+          </motion.div>
+          <p className="text-white/40 text-sm">Loading our love story...</p>
+        </motion.div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <AuthPage onAuthSuccess={() => { }} />;
+  }
+
   return (
     <LoveProvider>
       <AppContent />
     </LoveProvider>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AuthGate />
+    </AuthProvider>
   );
 }
 
