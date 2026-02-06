@@ -88,7 +88,7 @@ export const wheelMessages = [
     { text: "Send a flying kiss video right now! 😘", icon: "😘", category: "fun" },
     { text: "Text me the thing you miss most about me 💭", icon: "💭", category: "sweet" },
     { text: "Dedicate a song to me & send link 🎵", icon: "🎵", category: "romantic" },
-    { text: "Record a voice note saying 'I love you' in 3 different ways 💕", icon: "🎤", category: "fun" },
+
     { text: "Write a 4-line shayari/poem about us right now ✍️", icon: "✍️", category: "creative" },
     { text: "Tell me your favorite dream about us 🌙", icon: "🌙", category: "sweet" },
     { text: "Send me your cutest selfie making a heart 📸", icon: "📸", category: "fun" }
@@ -290,15 +290,6 @@ export const promiseSlips = [
     { id: 6, icon: "🎁", promise: "I promise to surprise you with thoughtful gifts when you least expect it" },
     { id: 7, icon: "👂", promise: "I promise to always listen to you, even when I'm tired or busy" },
     { id: 8, icon: "🌙", promise: "I promise to never let you fall asleep upset with me" },
-    { id: 9, icon: "😘", promise: "I promise to kiss you every morning and every night" },
-    { id: 10, icon: "🎭", promise: "I promise to always make you laugh, even on your worst days" },
-    { id: 11, icon: "✈️", promise: "I promise to take you on a surprise trip this year" },
-    { id: 12, icon: "📱", promise: "I promise to always text you back quickly when I can" },
-    { id: 13, icon: "🌹", promise: "I promise to bring you flowers randomly, just because" },
-    { id: 14, icon: "💕", promise: "I promise to tell you I love you every single day" },
-    { id: 15, icon: "🛡️", promise: "I promise to protect your heart and never intentionally hurt you" },
-    { id: 16, icon: "🎵", promise: "I promise to learn your favorite song and sing it to you" },
-    { id: 17, icon: "📸", promise: "I promise to take lots of photos of us to capture our memories" },
     { id: 18, icon: "🤝", promise: "I promise to always choose us, even when it's difficult" },
     { id: 19, icon: "🌟", promise: "I promise to be the best version of myself for you" },
     { id: 20, icon: "♾️", promise: "I promise that my love for you will never fade" }

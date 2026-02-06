@@ -28,6 +28,10 @@ export default function LoveCoupons() {
 
     const handleRedeem = useCallback((coupon) => {
         if (redeemedCoupons.includes(coupon.id)) return;
+        if (redeemedCoupons.length >= 10) {
+            alert("You can only redeem 10 coupons! 💕");
+            return;
+        }
         setShowConfirm(coupon);
     }, [redeemedCoupons]);
 

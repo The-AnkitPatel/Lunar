@@ -24,8 +24,11 @@ export default function PromiseJar() {
     // Jar fill level
     const fillPercent = Math.max(0, ((promiseSlips.length - claimedPromises.length) / promiseSlips.length) * 100);
 
+    const claimedLimit = 5;
+    const isLimitReached = claimedPromises.length >= claimedLimit;
+
     const handleShake = () => {
-        if (unclaimed.length === 0) return;
+        if (unclaimed.length === 0 || isLimitReached) return;
         setIsShaking(true);
         setTimeout(() => {
             const random = unclaimed[Math.floor(Math.random() * unclaimed.length)];
@@ -40,29 +43,42 @@ export default function PromiseJar() {
         setTimeout(() => {
             claimPromise(selectedPromise.id);
             setUnfoldingId(null);
+            // If this was the 5th promise, force show stats/list
+            if (claimedPromises.length + 1 >= claimedLimit) {
+                setShowFulfilled(true);
+            }
         }, 600);
     };
 
     const toggleFulfill = (id) => {
-        setFulfilledPromises(prev => 
+        setFulfilledPromises(prev =>
             prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
         );
     };
+
+    // Auto-show fulfilled list if limit reached
+    useEffect(() => {
+        if (isLimitReached) {
+            setShowFulfilled(true);
+        }
+    }, [isLimitReached]);
 
     return (
         <div className="space-y-5">
             <div className="text-center">
                 <h3 className="text-white font-semibold mb-1">Promise Jar 🏺</h3>
                 <p className="text-white/40 text-xs">
-                    Shake to pick a promise! {unclaimed.length} left in the jar
+                    {isLimitReached
+                        ? "You've chosen your 5 promises! 💕"
+                        : `Shake to pick a promise! (${claimedLimit - claimedPromises.length} picks left)`}
                 </p>
             </div>
 
             {/* Visual Jar */}
             <div className="flex justify-center">
-                <motion.div 
+                <motion.div
                     className="relative w-40 h-48"
-                    animate={isShaking ? { 
+                    animate={isShaking ? {
                         rotate: [0, -8, 8, -8, 8, -4, 4, 0],
                         x: [0, -5, 5, -5, 5, -2, 2, 0]
                     } : {}}
@@ -71,21 +87,21 @@ export default function PromiseJar() {
                     {/* Jar body */}
                     <div className="absolute bottom-0 w-full h-40 rounded-b-3xl rounded-t-lg border-2 border-amber-400/30 bg-amber-900/10 overflow-hidden">
                         {/* Fill level */}
-                        <motion.div 
+                        <motion.div
                             className="absolute bottom-0 w-full bg-gradient-to-t from-love-500/30 to-love-400/10"
                             animate={{ height: `${fillPercent}%` }}
                             transition={{ duration: 0.5 }}
                         />
-                        
+
                         {/* Paper slips inside */}
-                        {unclaimed.length > 0 && (
+                        {unclaimed.length > 0 && !isLimitReached && (
                             <div className="absolute inset-0 flex flex-wrap items-end justify-center gap-0.5 p-2">
                                 {unclaimed.slice(0, 12).map((_, i) => (
                                     <motion.div
                                         key={i}
                                         className="w-5 h-3 rounded-sm bg-amber-200/40"
                                         style={{ rotate: `${(i * 17) % 40 - 20}deg` }}
-                                        animate={isShaking ? { 
+                                        animate={isShaking ? {
                                             y: [0, -10, 5, -5, 0],
                                             rotate: [`${(i * 17) % 40 - 20}deg`, `${(i * 17) % 40 + 10}deg`, `${(i * 17) % 40 - 20}deg`]
                                         } : {}}
@@ -94,13 +110,13 @@ export default function PromiseJar() {
                             </div>
                         )}
 
-                        {unclaimed.length === 0 && (
+                        {(unclaimed.length === 0 || isLimitReached) && (
                             <div className="absolute inset-0 flex items-center justify-center">
-                                <p className="text-white/20 text-xs">Empty!</p>
+                                <p className="text-white/20 text-xs">{isLimitReached ? 'Limit Reached' : 'Empty!'}</p>
                             </div>
                         )}
                     </div>
-                    
+
                     {/* Jar lid */}
                     <div className="absolute top-0 w-full h-8 bg-amber-700/40 rounded-t-xl border-2 border-amber-400/30 flex items-center justify-center">
                         <div className="w-8 h-2 rounded-full bg-amber-400/30" />
@@ -112,14 +128,19 @@ export default function PromiseJar() {
             <motion.button
                 whileTap={{ scale: 0.95 }}
                 onClick={handleShake}
-                disabled={unclaimed.length === 0 || isShaking}
-                className={`w-full py-4 rounded-xl text-white font-medium transition-all ${
-                    unclaimed.length === 0
+                disabled={unclaimed.length === 0 || isShaking || isLimitReached}
+                className={`w-full py-4 rounded-xl text-white font-medium transition-all ${unclaimed.length === 0 || isLimitReached
                         ? 'bg-gray-600/50 cursor-not-allowed opacity-50'
                         : 'bg-gradient-to-r from-amber-500 to-love-500 shadow-lg shadow-love-500/20 active:scale-95'
-                }`}
+                    }`}
             >
-                {isShaking ? '🫨 Shaking...' : unclaimed.length > 0 ? '🤞 Shake the Jar' : 'All Promises Claimed!'}
+                {isShaking
+                    ? '🫨 Shaking...'
+                    : isLimitReached
+                        ? 'Selected 5/5 Promises'
+                        : unclaimed.length > 0
+                            ? '🤞 Shake the Jar'
+                            : 'All Promises Claimed!'}
             </motion.button>
 
             {/* Selected Promise Card */}
@@ -184,11 +205,10 @@ export default function PromiseJar() {
                                     key={p.id}
                                     layout
                                     onClick={() => toggleFulfill(p.id)}
-                                    className={`w-full p-3 rounded-xl border text-left flex items-center gap-3 transition-all ${
-                                        isFulfilled
+                                    className={`w-full p-3 rounded-xl border text-left flex items-center gap-3 transition-all ${isFulfilled
                                             ? 'bg-green-500/10 border-green-500/20'
                                             : 'bg-white/5 border-white/10 hover:bg-white/8'
-                                    }`}
+                                        }`}
                                 >
                                     <span className="text-xl">{p.icon}</span>
                                     <span className={`flex-1 text-xs leading-relaxed ${isFulfilled ? 'text-green-300/60 line-through' : 'text-white/60'}`}>
@@ -204,7 +224,7 @@ export default function PromiseJar() {
                         {/* Fulfillment Progress */}
                         <div className="p-3 rounded-xl bg-white/5 border border-white/5 text-center">
                             <p className="text-white/40 text-xs">
-                                {fulfilledPromises.length} of {claimed.length} promises fulfilled 
+                                {fulfilledPromises.length} of {claimed.length} promises fulfilled
                                 {fulfilledPromises.length === claimed.length && claimed.length > 0 && ' — You keep every promise! 🥰'}
                             </p>
                         </div>
