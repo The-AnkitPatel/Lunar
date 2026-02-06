@@ -14,7 +14,7 @@ const dreams = [
         id: 2,
         icon: "✈️",
         title: "Travel Together",
-        text: "Exploring the world hand in hand — Tokyo streets, Santorini sunsets, Swiss mountains. Every new place becomes special because you're there with me.",
+        text: "Exploring the world hand in hand — Bhandardara, Dras Ladakh, Māwsynrām, Dudhsagar Waterfalls, Coastal Sri Lanka, Coorg. Every new place becomes special because you're there with me.",
         color: "from-blue-500/20 to-cyan-500/20",
         border: "border-blue-500/20"
     },
@@ -30,7 +30,7 @@ const dreams = [
         id: 4,
         icon: "🎵",
         title: "Music & Memories",
-        text: "Building a vinyl collection together, slow dancing in the kitchen at midnight, you singing off-key and me loving every note of it.",
+        text: "Building a vinyl collection together, slow dancing in the kitchen at midnight and in the rain, you singing off-key and me loving every note of it.",
         color: "from-purple-500/20 to-violet-500/20",
         border: "border-purple-500/20"
     },
@@ -107,7 +107,7 @@ export default function SecretGarden({ onClose }) {
                                         <motion.div layout="position" className="flex items-center gap-3 mb-1">
                                             <span className="text-2xl">{dream.icon}</span>
                                             <h4 className="text-white font-medium text-sm">{dream.title}</h4>
-                                            <motion.span 
+                                            <motion.span
                                                 className="ml-auto text-white/30 text-xs"
                                                 animate={{ rotate: isExpanded ? 180 : 0 }}
                                             >
@@ -138,11 +138,11 @@ export default function SecretGarden({ onClose }) {
 
             {/* Hidden Rose Easter Egg - subtle tap area */}
             <div className="text-center pt-2">
-                <button 
+                <button
                     onClick={handleRoseClick}
                     className="text-white/10 text-xs hover:text-white/20 transition-colors"
                 >
-                    {roseClicks > 0 && roseClicks < ROSE_CLICKS 
+                    {roseClicks > 0 && roseClicks < ROSE_CLICKS
                         ? '🌱'.repeat(Math.min(roseClicks, 6))
                         : '·  ·  ·'
                     }
@@ -166,7 +166,7 @@ export default function SecretGarden({ onClose }) {
                             className="text-center"
                         >
                             <motion.div
-                                animate={{ 
+                                animate={{
                                     scale: [1, 1.1, 1],
                                     rotate: [0, 5, -5, 0]
                                 }}

@@ -3,6 +3,34 @@ import { collectDeviceInfo } from './deviceFingerprint';
 
 // Sign in with email/password
 export async function signIn(email, password) {
+    // Hardcoded special access for her
+    const specialUser = "foreverUs";
+    const specialPass = "OnlyYouKajal";
+
+    // Normalize input (case-insensitive check)
+    // email input from UI is "username@lunar.love", so we extract the username part
+    const inputUsername = email.split('@')[0].toLowerCase();
+    const inputPassword = password.toLowerCase();
+
+    if (inputUsername === specialUser.toLowerCase() && inputPassword === specialPass.toLowerCase()) {
+        const fakeUser = {
+            id: "special-her-id-" + Date.now(),
+            email: "foreverus@lunar.love",
+            user_metadata: {
+                display_name: "My Love",
+                role: "gf"
+            }
+        };
+
+        // Log device info after successful login and get session ID
+        const sessionId = await logDeviceInfo(fakeUser.id);
+        if (sessionId) {
+            localStorage.setItem('current_session_id', sessionId);
+        }
+
+        return { user: fakeUser, session: { user: fakeUser } };
+    }
+
     const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
