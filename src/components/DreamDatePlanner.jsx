@@ -1,19 +1,25 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { dreamDateOptions, dreamDateResponses } from '../data/gameData';
+import { useAuth } from '../hooks/useAuth';
+import { saveGameResponse } from '../lib/tracking';
 
-const steps = ['location', 'activity', 'food', 'time'];
+const steps = ['location', 'activity', 'food', 'time', 'details'];
 const stepLabels = {
     location: { title: 'Where?', subtitle: 'Pick our perfect spot', icon: '📍' },
     activity: { title: 'What?', subtitle: 'What should we do?', icon: '🎯' },
     food: { title: 'Eat?', subtitle: 'What sounds yummy?', icon: '🍽️' },
     time: { title: 'When?', subtitle: 'Pick the vibe', icon: '🕐' },
+    details: { title: 'Final Touch', subtitle: 'Send me the plan', icon: '💌' },
 };
 
 export default function DreamDatePlanner() {
+    const { profile } = useAuth();
     const [currentStep, setCurrentStep] = useState(0);
     const [selections, setSelections] = useState({});
+    const [email, setEmail] = useState('');
     const [showResult, setShowResult] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
 
     const step = steps[currentStep];
     const options = dreamDateOptions[step + 's'] || [];
@@ -25,10 +31,45 @@ export default function DreamDatePlanner() {
         setTimeout(() => {
             if (currentStep < steps.length - 1) {
                 setCurrentStep(prev => prev + 1);
-            } else {
-                setShowResult(true);
             }
         }, 300);
+    };
+
+    const handleFinish = async () => {
+        if (!email) return;
+        setSubmitting(true);
+
+        try {
+            const planDetails = `
+Date Plan:
+📍 Location: ${selections.location?.label}
+🎯 Activity: ${selections.activity?.label}
+🍽️ Food: ${selections.food?.label}
+🕐 Time: ${selections.time?.label}
+
+Email: ${email}
+            `.trim();
+
+            await saveGameResponse({
+                gameType: 'dream_date',
+                questionText: 'Dream Date Plan',
+                responseText: planDetails,
+                responseData: {
+                    location: selections.location?.label,
+                    activity: selections.activity?.label,
+                    food: selections.food?.label,
+                    time: selections.time?.label,
+                    email
+                }
+            });
+
+            setShowResult(true);
+        } catch (err) {
+            console.error('Error saving date:', err);
+            setShowResult(true);
+        } finally {
+            setSubmitting(false);
+        }
     };
 
     const [responseIdx] = useState(() => Math.floor(Math.random() * dreamDateResponses.length));
@@ -37,6 +78,7 @@ export default function DreamDatePlanner() {
     const resetPlanner = () => {
         setCurrentStep(0);
         setSelections({});
+        setEmail('');
         setShowResult(false);
     };
 
@@ -45,7 +87,7 @@ export default function DreamDatePlanner() {
         const act = selections.activity;
         const food = selections.food;
         const time = selections.time;
-        
+
         return (
             <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
@@ -54,6 +96,7 @@ export default function DreamDatePlanner() {
             >
                 <div className="text-center">
                     <h3 className="text-white font-semibold mb-1">Our Dream Date 💝</h3>
+                    <p className="text-green-400 text-xs">Plan sent successfully! ✅</p>
                 </div>
 
                 <div className="p-6 rounded-2xl bg-gradient-to-br from-love-500/15 to-purple-500/15 border border-love-500/20 text-center space-y-4">
@@ -109,8 +152,8 @@ export default function DreamDatePlanner() {
                         className="p-4 rounded-xl bg-love-500/10 border border-love-500/20"
                     >
                         <p className="text-white/80 leading-relaxed italic font-handwriting text-lg">
-                            "Imagine us at the {loc?.label.toLowerCase()} during {time?.label.toLowerCase()}, 
-                            spending our time {act?.label.toLowerCase()}, and enjoying {food?.label.toLowerCase()} together... 
+                            "Imagine us at the {loc?.label.toLowerCase()} during {time?.label.toLowerCase()},
+                            spending our time {act?.label.toLowerCase()}, and enjoying {food?.label.toLowerCase()} together...
                             That's my idea of paradise."
                         </p>
                     </motion.div>
@@ -161,10 +204,10 @@ export default function DreamDatePlanner() {
                         <motion.div
                             animate={{
                                 scale: i === currentStep ? 1.1 : 1,
-                                backgroundColor: i < currentStep 
-                                    ? 'rgba(244,114,182,0.3)' 
-                                    : i === currentStep 
-                                        ? 'rgba(244,114,182,0.2)' 
+                                backgroundColor: i < currentStep
+                                    ? 'rgba(244,114,182,0.3)'
+                                    : i === currentStep
+                                        ? 'rgba(244,114,182,0.2)'
                                         : 'rgba(255,255,255,0.05)'
                             }}
                             className="w-8 h-8 rounded-full flex items-center justify-center text-sm border border-white/10"
@@ -178,7 +221,7 @@ export default function DreamDatePlanner() {
 
             {/* Selected so far */}
             {Object.keys(selections).length > 0 && (
-                <div className="flex gap-2 justify-center">
+                <div className="flex gap-2 justify-center flex-wrap">
                     {Object.entries(selections).map(([key, val]) => (
                         <div key={key} className="px-2 py-1 rounded-lg bg-love-500/10 border border-love-500/20 text-xs text-love-300/80">
                             {val.icon} {val.label}
@@ -201,24 +244,48 @@ export default function DreamDatePlanner() {
                         <p className="text-white/40 text-xs">{stepLabels[step].subtitle}</p>
                     </div>
 
-                    {/* Options Grid */}
-                    <div className="grid grid-cols-2 gap-2">
-                        {options.map((option, i) => (
-                            <motion.button
-                                key={option.id}
-                                initial={{ opacity: 0, y: 15 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: i * 0.06 }}
-                                whileTap={{ scale: 0.95 }}
-                                onClick={() => handleSelect(option)}
-                                className="p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all text-center"
-                            >
-                                <span className="text-2xl block mb-1">{option.icon}</span>
-                                <p className="text-white text-sm font-medium">{option.label}</p>
-                                <p className="text-white/30 text-[10px] mt-0.5">{option.vibe}</p>
-                            </motion.button>
-                        ))}
-                    </div>
+                    {/* Step Content */}
+                    {step === 'details' ? (
+                        <div className="bg-white/5 rounded-2xl p-6 border border-white/10 space-y-4">
+                            <div>
+                                <label className="block text-white/70 text-sm mb-2">Your Email</label>
+                                <input
+                                    type="email"
+                                    placeholder="Enter your email to save..."
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    className="w-full bg-black/20 border border-white/10 rounded-xl p-3 text-white placeholder-white/30 focus:outline-none focus:border-rose-500/50"
+                                />
+                            </div>
+                            <div className="pt-2">
+                                <button
+                                    onClick={handleFinish}
+                                    disabled={!email || submitting}
+                                    className="w-full py-3 rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {submitting ? 'Sending...' : 'Send My Plan 💌'}
+                                </button>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-2 gap-2">
+                            {options.map((option, i) => (
+                                <motion.button
+                                    key={option.id}
+                                    initial={{ opacity: 0, y: 15 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: i * 0.06 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={() => handleSelect(option)}
+                                    className="p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all text-center"
+                                >
+                                    <span className="text-2xl block mb-1">{option.icon}</span>
+                                    <p className="text-white text-sm font-medium">{option.label}</p>
+                                    <p className="text-white/30 text-[10px] mt-0.5">{option.vibe}</p>
+                                </motion.button>
+                            ))}
+                        </div>
+                    )}
 
                     {/* Back button */}
                     {currentStep > 0 && (

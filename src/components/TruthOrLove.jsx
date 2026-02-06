@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { saveGameResponse } from '../lib/tracking';
+import GameReviewSection from './GameReviewSection';
 
 const truthQuestions = [
     "What's the first thing you noticed about me?",
@@ -28,6 +30,7 @@ export default function TruthOrLove() {
     const [isCompleted, setIsCompleted] = useState(false);
     const [isFlipping, setIsFlipping] = useState(false);
     const [cardRevealed, setCardRevealed] = useState(false);
+    const [savedResponses, setSavedResponses] = useState([]);
 
 
     const currentItem = mode === 'truth' ? truthQuestions[truthIndex] : loveActions[loveIndex];
@@ -54,7 +57,25 @@ export default function TruthOrLove() {
         }, 300);
     };
 
-    const handleNext = () => {
+    const handleNext = async () => {
+        // Save the response to database
+        if (response.trim()) {
+            const saved = await saveGameResponse({
+                gameType: 'truth_or_love',
+                questionText: currentQuestion,
+                responseText: response.trim(),
+                responseData: { mode, questionIndex: currentIndex }
+            });
+            if (saved) {
+                setSavedResponses(prev => [...prev, {
+                    id: saved.id,
+                    question: currentQuestion,
+                    answer: response.trim(),
+                    responseData: { mode, questionIndex: currentIndex },
+                }]);
+            }
+        }
+
         setCardRevealed(false);
 
         setTimeout(() => {
@@ -165,6 +186,24 @@ export default function TruthOrLove() {
                                         ? "You've been so honest! Now... isn't it time to show some Love? 💕"
                                         : "You've shared so much love! You truly make me the happiest person alive. 🥰"}
                                 </p>
+
+                                {/* Review Section */}
+                                {savedResponses.filter(r => r.responseData?.mode === mode).length > 0 && (
+                                    <div className="mb-6 text-left">
+                                        <GameReviewSection
+                                            responses={savedResponses.filter(r => r.responseData?.mode === mode)}
+                                            title={mode === 'truth' ? "Your Truths" : "Your Love Actions"}
+                                            icon={mode === 'truth' ? '🤔' : '💕'}
+                                            accentColor={mode === 'truth' ? 'purple' : 'rose'}
+                                            onResponseUpdated={(idx, newAnswer) => {
+                                                const modeResponses = savedResponses.filter(r => r.responseData?.mode === mode);
+                                                const globalIdx = savedResponses.indexOf(modeResponses[idx]);
+                                                setSavedResponses(prev => prev.map((r, i) => i === globalIdx ? { ...r, answer: newAnswer } : r));
+                                            }}
+                                        />
+                                    </div>
+                                )}
+
                                 {mode === 'truth' ? (
                                     <button onClick={handleSwitchToLove} className="w-full py-4 rounded-xl text-white font-bold bg-gradient-to-r from-rose-500 to-red-600 shadow-lg shadow-rose-500/20 active:scale-95 transition-transform">
                                         Play Love Mode Now! 💖

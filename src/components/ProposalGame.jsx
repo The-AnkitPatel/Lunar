@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { saveGameResponse } from '../lib/tracking';
 
 const conversations = [
     { question: "Tumhe padhne ka shouk hai?", yesResponse: "Mere saath nikaah padh lo..." },
@@ -73,6 +74,13 @@ export default function ProposalGame() {
     };
 
     const handleYes = () => {
+        // Save the "Yes" response
+        saveGameResponse({
+            gameType: 'proposal',
+            questionText: currentConvo.question,
+            responseText: 'Haan! 💕',
+            responseData: { answer: 'yes', questionIndex: currentIndex, noAttempts }
+        });
         setShowResponse(true);
     };
 

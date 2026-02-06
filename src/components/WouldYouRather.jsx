@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { saveGameResponse } from '../lib/tracking';
+import GameReviewSection from './GameReviewSection';
 
 const scenarios = [
     { a: "Never be able to hug me again", b: "Never be able to text me again", category: "Touch vs Communication" },
@@ -54,6 +56,7 @@ export default function WouldYouRather() {
     const [showExplanation, setShowExplanation] = useState(false);
     const [animating, setAnimating] = useState(false);
     const [completed, setCompleted] = useState(false);
+    const [savedResponses, setSavedResponses] = useState([]);
 
     const scenario = scenarios[current];
 
@@ -72,7 +75,30 @@ export default function WouldYouRather() {
         }, 800);
     };
 
-    const handleNext = () => {
+    const handleNext = async () => {
+        // Save the choice to database
+        const saved = await saveGameResponse({
+            gameType: 'would_you_rather',
+            questionText: `${scenario.a} vs ${scenario.b}`,
+            responseText: selectedSide === 'a' ? scenario.a : scenario.b,
+            responseData: {
+                side: selectedSide,
+                category: scenario.category,
+                explanation: explanation || null,
+                questionIndex: current
+            }
+        });
+
+        if (saved) {
+            setSavedResponses(prev => [...prev, {
+                id: saved.id,
+                question: `${scenario.a}  OR  ${scenario.b}`,
+                answer: selectedSide === 'a' ? scenario.a : scenario.b,
+                extra: explanation || null,
+                responseData: { side: selectedSide, category: scenario.category, explanation: explanation || null, questionIndex: current },
+            }]);
+        }
+
         setSelectedSide(null);
         setShowExplanation(false);
         setExplanation('');
@@ -141,6 +167,21 @@ export default function WouldYouRather() {
                             "No matter what you choose, the fact that you're playing this means you're already the perfect partner 💗"
                         </p>
                     </div>
+
+                    {/* Review Section */}
+                    {savedResponses.length > 0 && (
+                        <div className="mb-6 text-left">
+                            <GameReviewSection
+                                responses={savedResponses}
+                                title="Your Choices"
+                                icon="💭"
+                                accentColor="purple"
+                                onResponseUpdated={(idx, newAnswer) => {
+                                    setSavedResponses(prev => prev.map((r, i) => i === idx ? { ...r, answer: newAnswer } : r));
+                                }}
+                            />
+                        </div>
+                    )}
 
                     <button onClick={resetGame} className="w-full py-3 rounded-xl bg-white/10 text-white hover:bg-white/20 transition-colors">
                         Play Again

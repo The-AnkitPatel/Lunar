@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LoveProvider } from './context/LoveContext';
 import { AuthProvider } from './context/AuthProvider';
@@ -7,33 +7,50 @@ import { useAuth } from './hooks/useAuth';
 import { cn } from './lib/utils';
 import AuthPage from './components/AuthPage';
 import DayCard from './components/DayCard';
-import LoveQuiz from './components/LoveQuiz';
-import MemoryGame from './components/MemoryGame';
-import SpinWheel from './components/SpinWheel';
-import LoveLetter from './components/LoveLetter';
 import RomanticToast from './components/RomanticToast';
-import LoveCoupons from './components/LoveCoupons';
-import PromiseJar from './components/PromiseJar';
-import ScratchCard from './components/ScratchCard';
-import SecretGarden from './components/SecretGarden';
-import TruthOrLove from './components/TruthOrLove';
-import WouldYouRather from './components/WouldYouRather';
-import CompleteSentence from './components/CompleteSentence';
-import ProposalGame from './components/ProposalGame';
-import LoveMap from './components/LoveMap';
-import DreamDatePlanner from './components/DreamDatePlanner';
+import LockTimerModal from './components/LockTimerModal';
 import { valentinesDays } from './data/valentinesDays';
+
+// Lazy load game components for faster initial load
+const LoveQuiz = lazy(() => import('./components/LoveQuiz'));
+const MemoryGame = lazy(() => import('./components/MemoryGame'));
+const SpinWheel = lazy(() => import('./components/SpinWheel'));
+const LoveLetter = lazy(() => import('./components/LoveLetter'));
+const LoveCoupons = lazy(() => import('./components/LoveCoupons'));
+const PromiseJar = lazy(() => import('./components/PromiseJar'));
+const ScratchCard = lazy(() => import('./components/ScratchCard'));
+const SecretGarden = lazy(() => import('./components/SecretGarden'));
+const TruthOrLove = lazy(() => import('./components/TruthOrLove'));
+const WouldYouRather = lazy(() => import('./components/WouldYouRather'));
+const CompleteSentence = lazy(() => import('./components/CompleteSentence'));
+const ProposalGame = lazy(() => import('./components/ProposalGame'));
+const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
+const LoveMap = lazy(() => import('./components/LoveMap'));
+const DreamDatePlanner = lazy(() => import('./components/DreamDatePlanner'));
+
+// Loading spinner for lazy components
+function GameLoader() {
+    return (
+        <div className="flex items-center justify-center py-12">
+            <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                className="w-8 h-8 border-2 border-pink-500/30 border-t-pink-500 rounded-full"
+            />
+        </div>
+    );
+}
 
 // All features unlocked - Each day has a unique game to bring you closer
 const dayFeatures = [
-  { day: 7, id: 'rose', name: 'Rose Day', icon: '🌹', component: 'truth', description: 'Truth or Love' },
-  { day: 8, id: 'propose', name: 'Propose Day', icon: '💍', component: 'proposal', description: 'Say Haan!' },
-  { day: 9, id: 'chocolate', name: 'Chocolate Day', icon: '🍫', component: 'rather', description: 'Would you rather' },
-  { day: 10, id: 'teddy', name: 'Teddy Day', icon: '🧸', component: 'spin', description: 'Spinner Game' },
-  { day: 11, id: 'promise', name: 'Promise Day', icon: '🤞', component: 'promises', description: 'Promise jar' },
-  { day: 12, id: 'hug', name: 'Hug Day', icon: '🤗', component: 'coupons', description: 'Love coupons' },
-  { day: 13, id: 'kiss', name: 'Kiss Day', icon: '😘', component: 'scratch', description: 'Scratch cards' },
-  { day: 14, id: 'valentine', name: "Valentine's", icon: '❤️', component: 'letter', description: 'Love letter' }
+  { day: 7, id: 'rose', name: 'Rose Day', icon: '🌹', component: 'truth', description: 'Truth or Love', lockedMessage: "Sabra ka fal gulab se bhi khubsurat hota hai... wait for it! 🌹" },
+  { day: 8, id: 'propose', name: 'Propose Day', icon: '💍', component: 'proposal', description: 'Say Haan!', lockedMessage: "Dil ki baat bolne ke liye thoda intezaar toh banta hai... 😉" },
+  { day: 9, id: 'chocolate', name: 'Chocolate Day', icon: '🍫', component: 'rather', description: 'Would you rather', lockedMessage: "Mithaas aane wali hai... bas thoda sabar aur! 🍫" },
+  { day: 10, id: 'teddy', name: 'Teddy Day', icon: '🧸', component: 'spin', description: 'Spinner Game', lockedMessage: "Jhaphi (Hugs) ke liye thoda wait karo ji... 🧸" },
+  { day: 11, id: 'promise', name: 'Promise Day', icon: '🤞', component: 'promises', description: 'Promise jar', lockedMessage: "Wada raha, yeh intezaar worth it hoga! 🤞" },
+  { day: 12, id: 'hug', name: 'Hug Day', icon: '🤗', component: 'coupons', description: 'Love coupons', lockedMessage: "Baahon mein bharne ke liye bas kuch hi pal... 🤗" },
+  { day: 13, id: 'kiss', name: 'Kiss Day', icon: '😘', component: 'scratch', description: 'Scratch cards', lockedMessage: "Pyaar ki mohar lagne wali hai... sabar rakho! 😘" },
+  { day: 14, id: 'valentine', name: "Valentine's", icon: '❤️', component: 'letter', description: 'Love letter', lockedMessage: "Sabse khaas din ke liye sabse khaas intezaar... ❤️" }
 ];
 
 // Bonus games available anytime
@@ -44,13 +61,36 @@ const bonusFeatures = [
   { id: 'dreamdate', name: 'Dream Date', icon: '🌹', component: 'dreamdate', description: 'Plan our perfect date' },
 ];
 
+import { useVisitTracker } from './hooks/useVisitTracker';
+import { trackFeatureOpen, trackFeatureClose } from './lib/tracking';
+
 function AppContent() {
+  useVisitTracker();
   const { userName } = useLoveContext();
   const { profile, isAdmin, isGf, signOut: handleSignOut } = useAuth();
   const [activeFeature, setActiveFeature] = useState(null);
   const [selectedDayIndex, setSelectedDayIndex] = useState(0);
   const [showSecret, setShowSecret] = useState(false);
   const [secretOpen, setSecretOpen] = useState(false);
+
+  // Track feature opens/closes
+  const handleSetActiveFeature = (feature) => {
+    if (activeFeature && activeFeature.id !== feature?.id) {
+      trackFeatureClose(activeFeature.component || activeFeature.id);
+    }
+    if (feature) {
+      trackFeatureOpen(feature.component || feature.id);
+    }
+    setActiveFeature(feature);
+  };
+
+  // Lock Timer State
+  const [showLockModal, setShowLockModal] = useState(false);
+  const [lockedDayInfo, setLockedDayInfo] = useState({ name: '', unlockDate: new Date(), message: '' });
+
+  // Admin Dashboard State
+  const [showAdminDashboard, setShowAdminDashboard] = useState(false);
+
   const currentDayData = valentinesDays[selectedDayIndex];
 
   // Check if a day is unlocked for the current user
@@ -125,9 +165,17 @@ function AppContent() {
             Welcome, {profile?.display_name || userName} ✨
           </p>
           {isAdmin && (
-            <span className="inline-block mt-1 text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full border border-amber-500/30">
-              👑 Admin
-            </span>
+            <div className="flex flex-col items-center gap-2 mt-2">
+              <span className="inline-block text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full border border-amber-500/30">
+                👑 Admin
+              </span>
+              <button
+                onClick={() => setShowAdminDashboard(true)}
+                className="text-xs bg-white/10 hover:bg-white/20 text-white px-3 py-1 rounded transition-colors"
+              >
+                Open Dashboard 📊
+              </button>
+            </div>
           )}
           <button
             onClick={handleSignOut}
@@ -136,6 +184,15 @@ function AppContent() {
             Sign Out
           </button>
         </motion.header>
+
+        {/* Admin Dashboard */}
+        <AnimatePresence>
+          {showAdminDashboard && (
+            <Suspense fallback={<GameLoader />}>
+              <AdminDashboard onClose={() => setShowAdminDashboard(false)} />
+            </Suspense>
+          )}
+        </AnimatePresence>
 
         {/* Day Navigation - Horizontal Scroll */}
         <motion.nav
@@ -151,15 +208,28 @@ function AppContent() {
                 <motion.button
                   key={feature.id}
                   onClick={() => {
-                    if (!unlocked) return;
-                    setActiveFeature(feature);
+                    if (!unlocked) {
+                      const now = new Date();
+                      const year = now.getFullYear();
+                      const unlockDate = new Date(year, 1, feature.day); // Feb is month 1
+                      unlockDate.setHours(0, 0, 0, 0);
+
+                      setLockedDayInfo({
+                        name: feature.name,
+                        unlockDate: unlockDate,
+                        message: feature.lockedMessage // Pass custom message
+                      });
+                      setShowLockModal(true);
+                      return;
+                    }
+                    handleSetActiveFeature(feature);
                     setSelectedDayIndex(index);
                   }}
-                  disabled={!unlocked}
+                  disabled={false} // Enable click for locked days
                   className={cn(
                     "flex-shrink-0 snap-start flex flex-col items-center gap-1 p-3 min-w-[72px] rounded-xl border transition-all duration-200",
                     !unlocked
-                      ? "bg-white/[0.02] border-white/5 opacity-50 cursor-not-allowed"
+                      ? "bg-white/[0.02] border-white/5 opacity-70" // Increased opacity
                       : activeFeature?.id === feature.id
                         ? "bg-gradient-to-br from-rose-500 to-red-600 border-rose-400 shadow-lg shadow-rose-500/25"
                         : "bg-white/5 border-white/10 hover:bg-white/10 active:scale-95"
@@ -210,7 +280,7 @@ function AppContent() {
               <motion.button
                 key={feature.id}
                 onClick={() => {
-                  setActiveFeature(feature);
+                  handleSetActiveFeature(feature);
                   setSelectedDayIndex(0);
                 }}
                 className={cn(
@@ -257,7 +327,9 @@ function AppContent() {
                     </div>
                   </div>
 
-                  {renderFeatureContent()}
+                  <Suspense fallback={<GameLoader />}>
+                    {renderFeatureContent()}
+                  </Suspense>
                 </section>
               )}
             </motion.div>
@@ -332,6 +404,18 @@ function AppContent() {
               <SecretGarden onClose={() => setSecretOpen(false)} />
             </motion.div>
           )}
+        </AnimatePresence>
+
+        {/* Lock Timer Modal */}
+        <AnimatePresence>
+            {showLockModal && (
+                <LockTimerModal 
+                    unlockDate={lockedDayInfo.unlockDate} 
+                    dayName={lockedDayInfo.name}
+                    message={lockedDayInfo.message}
+                    onClose={() => setShowLockModal(false)} 
+                />
+            )}
         </AnimatePresence>
 
         {/* Footer */}

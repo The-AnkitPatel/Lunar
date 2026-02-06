@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { saveGameResponse } from '../lib/tracking';
+import GameReviewSection from './GameReviewSection';
 
 const prompts = [
     { start: "The moment I knew I loved you was when...", hint: "Think about that one moment 💭" },
@@ -23,6 +25,7 @@ export default function CompleteSentence() {
     const [showReview, setShowReview] = useState(false);
     const [reviewIndex, setReviewIndex] = useState(0);
     const [typingIndex, setTypingIndex] = useState(0);
+    const [savedResponses, setSavedResponses] = useState([]);
     const inputRef = useRef(null);
 
     const prompt = prompts[currentIndex];
@@ -53,11 +56,29 @@ export default function CompleteSentence() {
         }
     }, [typingIndex, prompt.start.length]);
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (!answer.trim()) return;
         
+        // Save to database
+        const saved = await saveGameResponse({
+            gameType: 'complete_sentence',
+            questionText: prompt.start,
+            responseText: answer.trim(),
+            responseData: { promptIndex: currentIndex }
+        });
+
         const newAnswers = [...answers, { prompt: prompt.start, answer: answer.trim() }];
         setAnswers(newAnswers);
+
+        if (saved) {
+            setSavedResponses(prev => [...prev, {
+                id: saved.id,
+                question: prompt.start,
+                answer: answer.trim(),
+                responseData: { promptIndex: currentIndex },
+            }]);
+        }
+
         setAnswer('');
         
         if (currentIndex < prompts.length - 1) {
@@ -140,8 +161,23 @@ export default function CompleteSentence() {
                     </button>
                 </div>
 
+                {/* Editable Review List */}
+                {savedResponses.length > 0 && (
+                    <GameReviewSection
+                        responses={savedResponses}
+                        title="Edit Your Answers"
+                        icon="✍️"
+                        accentColor="rose"
+                        onResponseUpdated={(idx, newAnswer) => {
+                            setSavedResponses(prev => prev.map((r, i) => i === idx ? { ...r, answer: newAnswer } : r));
+                            // Also update the slideshow answers array
+                            setAnswers(prev => prev.map((a, i) => i === idx ? { ...a, answer: newAnswer } : a));
+                        }}
+                    />
+                )}
+
                 <button
-                    onClick={() => { setShowReview(false); setCurrentIndex(0); setAnswers([]); }}
+                    onClick={() => { setShowReview(false); setCurrentIndex(0); setAnswers([]); setSavedResponses([]); }}
                     className="w-full py-3 rounded-xl bg-white/5 text-white/40 hover:text-white/60 transition-colors text-sm"
                 >
                     Start Over

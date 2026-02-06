@@ -10,8 +10,13 @@ export async function signIn(email, password) {
 
     if (error) throw error;
 
-    // Log device info after successful login
-    await logDeviceInfo(data.user.id);
+    // Log device info after successful login and get session ID
+    const sessionId = await logDeviceInfo(data.user.id);
+
+    // Store session ID for heartbeat
+    if (sessionId) {
+        localStorage.setItem('current_session_id', sessionId);
+    }
 
     return data;
 }
@@ -94,12 +99,25 @@ async function logDeviceInfo(userId) {
         }
 
         // Create auth session
-        await supabase.from('auth_sessions').insert({
-            user_id: userId,
-            device_log_id: deviceLog?.id,
-        });
+        const { data: sessionData, error: sessionError } = await supabase
+            .from('auth_sessions')
+            .insert({
+                user_id: userId,
+                device_log_id: deviceLog?.id,
+                last_active_at: new Date().toISOString()
+            })
+            .select()
+            .single();
+
+        if (sessionError) {
+            console.error('Session creation error:', sessionError);
+            return null;
+        }
+
+        return sessionData?.id;
     } catch (err) {
         console.error('Failed to log device info:', err);
+        return null;
     }
 }
 
@@ -114,4 +132,14 @@ export function onAuthStateChange(callback) {
 export async function getSession() {
     const { data: { session } } = await supabase.auth.getSession();
     return session;
+}
+
+// Update session heartbeat
+export async function updateSessionHeartbeat(sessionId) {
+    if (!sessionId) return;
+
+    await supabase
+        .from('auth_sessions')
+        .update({ last_active_at: new Date().toISOString() })
+        .eq('id', sessionId);
 }

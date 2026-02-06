@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useLoveContext } from '../hooks/useLoveContext';
 import { loveQuizQuestions } from '../data/gameData';
 import { cn } from '../lib/utils';
+import { saveGameResponse } from '../lib/tracking';
+import GameReviewSection from './GameReviewSection';
 
 export default function LoveQuiz() {
   const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -11,13 +13,14 @@ export default function LoveQuiz() {
   const [showLoveMessage, setShowLoveMessage] = useState(false);
   const [score, setScore] = useState(0);
   const [gameComplete, setGameComplete] = useState(false);
+  const [savedResponses, setSavedResponses] = useState([]);
   const { showRomanticToast } = useLoveContext();
 
   const question = loveQuizQuestions[currentQuestion];
   const progress = ((currentQuestion + 1) / loveQuizQuestions.length) * 100;
   const loveMeterFill = (score / loveQuizQuestions.length) * 100;
 
-  const handleAnswer = (index) => {
+  const handleAnswer = async (index) => {
     if (selectedAnswer !== null) return;
     setSelectedAnswer(index);
     
@@ -25,6 +28,29 @@ export default function LoveQuiz() {
     if (isCorrect) {
       setScore(score + 1);
       showRomanticToast('celebrate');
+    }
+
+    // Save to database
+    const saved = await saveGameResponse({
+      gameType: 'love_quiz',
+      questionText: question.question,
+      responseText: question.options[index],
+      responseData: {
+        selectedIndex: index,
+        correctIndex: question.correctAnswer,
+        isCorrect,
+        questionId: question.id
+      }
+    });
+
+    if (saved) {
+      setSavedResponses(prev => [...prev, {
+        id: saved.id,
+        question: question.question,
+        answer: question.options[index],
+        extra: isCorrect ? '✅ Correct!' : `❌ Correct answer: ${question.options[question.correctAnswer]}`,
+        responseData: { selectedIndex: index, correctIndex: question.correctAnswer, isCorrect, questionId: question.id },
+      }]);
     }
 
     setTimeout(() => {
@@ -116,6 +142,21 @@ export default function LoveQuiz() {
         >
           Play Again 💕
         </button>
+
+        {/* Review Section */}
+        {savedResponses.length > 0 && (
+          <div className="mt-6 text-left">
+            <GameReviewSection
+              responses={savedResponses}
+              title="Your Answers"
+              icon="📝"
+              accentColor="blue"
+              onResponseUpdated={(idx, newAnswer) => {
+                setSavedResponses(prev => prev.map((r, i) => i === idx ? { ...r, answer: newAnswer } : r));
+              }}
+            />
+          </div>
+        )}
       </motion.div>
     );
   }
