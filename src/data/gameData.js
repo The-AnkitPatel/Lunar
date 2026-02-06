@@ -678,7 +678,7 @@ export const loveMapLocations = [
     { id: 1, icon: "📱", title: "Where it all started", description: "Found her on Instagram after JEE Advanced — and my world changed forever", tag: "origin", color: "#ec4899" },
     { id: 2, icon: "💕", title: "Where she lives", description: "Where my heart actually is (because it's with her)", tag: "her", color: "#ef4444" },
     { id: 3, icon: "🏠", title: "Where I live", description: "Where I am, counting days until we meet", tag: "me", color: "#8b5cf6" },
-    { id: 4, icon: "💍", title: "Where I proposed", description: "January 12, 2026 — over a call, but felt like she was right here", tag: "proposal", color: "#f59e0b" },
+    { id: 4, icon: "💍", title: "Proposed on WhatsApp", description: "Around 9:45 PM — magical words sent through a screen, but felt in the heart 💕", tag: "proposal", color: "#f59e0b" },
     { id: 5, icon: "✈️", title: "Where we'll meet", description: "The place our LDR becomes real. The most anticipated moment of my life.", tag: "future", color: "#10b981" },
     { id: 6, icon: "🌙", title: "Under the same moon", description: "Wherever we both are, we look at the same sky. That connects us.", tag: "always", color: "#6366f1" },
 ];

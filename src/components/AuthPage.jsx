@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { signIn } from '../lib/auth';
+import { useAuth } from '../hooks/useAuth';
 
 export default function AuthPage({ onAuthSuccess }) {
+    const { login } = useAuth();
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
@@ -15,7 +16,7 @@ export default function AuthPage({ onAuthSuccess }) {
         setLoading(true);
 
         try {
-            const data = await signIn(`${username.trim()}@lunar.love`, password);
+            const data = await login(`${username.trim()}@lunar.love`, password);
             if (data?.user) {
                 onAuthSuccess(data.user);
             }

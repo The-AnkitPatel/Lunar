@@ -13,26 +13,56 @@ const stepLabels = {
     details: { title: 'Final Touch', subtitle: 'Send me the plan', icon: '💌' },
 };
 
+
+const OPTION_KEYS = {
+    location: 'locations',
+    activity: 'activities',
+    food: 'foods',
+    time: 'times'
+};
+
 export default function DreamDatePlanner() {
     const { profile } = useAuth();
     const [currentStep, setCurrentStep] = useState(0);
     const [selections, setSelections] = useState({});
+    const [customInput, setCustomInput] = useState('');
     const [email, setEmail] = useState('');
     const [showResult, setShowResult] = useState(false);
     const [submitting, setSubmitting] = useState(false);
 
     const step = steps[currentStep];
-    const options = dreamDateOptions[step + 's'] || [];
+    const options = dreamDateOptions[OPTION_KEYS[step]] || [];
 
     const handleSelect = (option) => {
         const newSelections = { ...selections, [step]: option };
         setSelections(newSelections);
+        setCustomInput('');
 
         setTimeout(() => {
             if (currentStep < steps.length - 1) {
                 setCurrentStep(prev => prev + 1);
             }
         }, 300);
+    };
+
+    const handleCustomSubmit = () => {
+        if (!customInput.trim()) return;
+
+        const newSelections = {
+            ...selections,
+            [step]: {
+                id: 'custom',
+                label: customInput,
+                icon: '✨',
+                vibe: 'your choice'
+            }
+        };
+        setSelections(newSelections);
+        setCustomInput('');
+
+        if (currentStep < steps.length - 1) {
+            setCurrentStep(prev => prev + 1);
+        }
     };
 
     const handleFinish = async () => {
@@ -78,6 +108,7 @@ Email: ${email}
     const resetPlanner = () => {
         setCurrentStep(0);
         setSelections({});
+        setCustomInput('');
         setEmail('');
         setShowResult(false);
     };
@@ -268,23 +299,51 @@ Email: ${email}
                             </div>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-2 gap-2">
-                            {options.map((option, i) => (
-                                <motion.button
-                                    key={option.id}
-                                    initial={{ opacity: 0, y: 15 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: i * 0.06 }}
-                                    whileTap={{ scale: 0.95 }}
-                                    onClick={() => handleSelect(option)}
-                                    className="p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all text-center"
-                                >
-                                    <span className="text-2xl block mb-1">{option.icon}</span>
-                                    <p className="text-white text-sm font-medium">{option.label}</p>
-                                    <p className="text-white/30 text-[10px] mt-0.5">{option.vibe}</p>
-                                </motion.button>
-                            ))}
-                        </div>
+                        <>
+                            <div className="grid grid-cols-2 gap-2">
+                                {options.map((option, i) => (
+                                    <motion.button
+                                        key={option.id}
+                                        initial={{ opacity: 0, y: 15 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: i * 0.06 }}
+                                        whileTap={{ scale: 0.95 }}
+                                        onClick={() => handleSelect(option)}
+                                        className="p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all text-center"
+                                    >
+                                        <span className="text-2xl block mb-1">{option.icon}</span>
+                                        <p className="text-white text-sm font-medium">{option.label}</p>
+                                        <p className="text-white/30 text-[10px] mt-0.5">{option.vibe}</p>
+                                    </motion.button>
+                                ))}
+                            </div>
+
+                            {/* Or Custom Input */}
+                            <div className="relative flex py-2 items-center">
+                                <div className="flex-grow border-t border-white/10"></div>
+                                <span className="flex-shrink-0 mx-4 text-white/30 text-[10px] uppercase">Or write your own</span>
+                                <div className="flex-grow border-t border-white/10"></div>
+                            </div>
+
+                            <div className="bg-white/5 rounded-xl p-2 border border-white/10">
+                                <textarea
+                                    value={customInput}
+                                    onChange={(e) => setCustomInput(e.target.value)}
+                                    placeholder={`Type your own ${stepLabels[step].title?.replace('?', '')}...`}
+                                    className="w-full bg-transparent text-white text-sm p-2 placeholder-white/20 focus:outline-none resize-none"
+                                    rows={2}
+                                />
+                                <div className="flex justify-end mt-1">
+                                    <button
+                                        onClick={handleCustomSubmit}
+                                        disabled={!customInput.trim()}
+                                        className="px-4 py-1.5 bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 text-xs rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                                    >
+                                        Next →
+                                    </button>
+                                </div>
+                            </div>
+                        </>
                     )}
 
                     {/* Back button */}

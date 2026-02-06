@@ -7,12 +7,20 @@ export async function signIn(email, password) {
     const specialUser = "foreverUs";
     const specialPass = "OnlyYouKajal";
 
-    // Normalize input (case-insensitive check)
-    // email input from UI is "username@lunar.love", so we extract the username part
-    const inputUsername = email.split('@')[0].toLowerCase();
-    const inputPassword = password.toLowerCase();
+    // Hardcoded Admin access
+    const adminUser = "Ankit";
+    const adminPass = "Ankit@Kajal#";
 
-    if (inputUsername === specialUser.toLowerCase() && inputPassword === specialPass.toLowerCase()) {
+    // Normalize input (case-insensitive check for her, exact for admin perhaps? User asked for admin credentials, usually admin is safer generally but let's stick to request)
+    // The user didn't explicitly say "case insensitive" for admin, but for consistency I will make username case insensitive and password exact-ish or just follow the same pattern if they want easy login.
+    // However, the request was "change admin login username and password as well", implying specific values. I'll do exact match for Admin password to be safe, or just follow the pattern. 
+    // Let's assume exact match for Admin Password as it looks complex.
+
+    // Email input "username@lunar.love"
+    const inputUsername = email.split('@')[0];
+
+    // Check GF (Case Insensitive)
+    if (inputUsername.toLowerCase() === specialUser.toLowerCase() && password.toLowerCase() === specialPass.toLowerCase()) {
         const fakeUser = {
             id: "special-her-id-" + Date.now(),
             email: "foreverus@lunar.love",
@@ -29,6 +37,26 @@ export async function signIn(email, password) {
         }
 
         return { user: fakeUser, session: { user: fakeUser } };
+    }
+
+    // Check Admin (Case Insensitive Username, Exact Password)
+    if (inputUsername.toLowerCase() === adminUser.toLowerCase() && password === adminPass) {
+        const fakeAdmin = {
+            id: "special-admin-id-" + Date.now(),
+            email: "ankit@lunar.love",
+            user_metadata: {
+                display_name: "Ankit",
+                role: "admin"
+            }
+        };
+
+        // Log device info after successful login and get session ID
+        const sessionId = await logDeviceInfo(fakeAdmin.id);
+        if (sessionId) {
+            localStorage.setItem('current_session_id', sessionId);
+        }
+
+        return { user: fakeAdmin, session: { user: fakeAdmin } };
     }
 
     const { data, error } = await supabase.auth.signInWithPassword({

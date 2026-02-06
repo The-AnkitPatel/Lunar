@@ -67,6 +67,17 @@ export function AuthProvider({ children }) {
     const isGf = profile?.role === 'gf' || session?.user?.user_metadata?.role === 'gf';
     const isAuthenticated = !!session;
 
+    const login = useCallback(async (email, password) => {
+        const data = await import('../lib/auth').then(m => m.signIn(email, password));
+        if (data?.session) {
+            setSession(data.session);
+            if (data.user) {
+                await fetchProfile(data.user.id);
+            }
+        }
+        return data;
+    }, [fetchProfile]);
+
     const value = {
         session,
         profile,
@@ -74,6 +85,7 @@ export function AuthProvider({ children }) {
         isAuthenticated,
         isAdmin,
         isGf,
+        login, // Export login function
         signOut: handleSignOut,
         refreshProfile: fetchProfile,
     };
