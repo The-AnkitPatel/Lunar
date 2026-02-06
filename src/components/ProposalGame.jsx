@@ -7,41 +7,40 @@ const conversations = [
     { question: "Tumhe likhne ka shouk hai?", yesResponse: "Apne naam ke saath mera naam likh lo..." },
     { question: "Tumhe dekhne ka shouk hai?", yesResponse: "Mere saath jawaani se budhapa dekh lo..." },
     { question: "Tumhe samajhne ka shouk hai?", yesResponse: "Mujhse behtar nahi milega, samajh lo..." },
-    { question: "Tumhe hasne ka shouk hai?", yesResponse: "Mera surname le lo, poori duniya hasegi..." },
     { question: "Tumhe sunne ka shouk hai?", yesResponse: "Meri dhadkan sun lo, tumhara naam leti hai..." },
     { question: "Tumhe jeene ka shouk hai?", yesResponse: "Mere saath jee lo, jannat ban jayegi..." },
     { question: "Tumhe chahne ka shouk hai?", yesResponse: "Mujhe chaho, main tumhe poori duniya dunga..." },
 ];
 
 function TypewriterText({ text, onComplete }) {
-  const [displayed, setDisplayed] = useState('');
-  const [done, setDone] = useState(false);
-  const onCompleteRef = useRef(onComplete);
-  onCompleteRef.current = onComplete;
+    const [displayed, setDisplayed] = useState('');
+    const [done, setDone] = useState(false);
+    const onCompleteRef = useRef(onComplete);
+    onCompleteRef.current = onComplete;
 
-  useEffect(() => {
-    setDisplayed('');
-    setDone(false);
-    let i = 0;
-    const interval = setInterval(() => {
-      if (i < text.length) {
-        setDisplayed(text.slice(0, i + 1));
-        i++;
-      } else {
-        clearInterval(interval);
-        setDone(true);
-        onCompleteRef.current?.();
-      }
-    }, 50);
-    return () => clearInterval(interval);
-  }, [text]);
+    useEffect(() => {
+        setDisplayed('');
+        setDone(false);
+        let i = 0;
+        const interval = setInterval(() => {
+            if (i < text.length) {
+                setDisplayed(text.slice(0, i + 1));
+                i++;
+            } else {
+                clearInterval(interval);
+                setDone(true);
+                onCompleteRef.current?.();
+            }
+        }, 50);
+        return () => clearInterval(interval);
+    }, [text]);
 
-  return (
-    <span>
-      {displayed}
-      {!done && <motion.span animate={{ opacity: [0, 1] }} transition={{ duration: 0.5, repeat: Infinity }}>|</motion.span>}
-    </span>
-  );
+    return (
+        <span>
+            {displayed}
+            {!done && <motion.span animate={{ opacity: [0, 1] }} transition={{ duration: 0.5, repeat: Infinity }}>|</motion.span>}
+        </span>
+    );
 }
 
 export default function ProposalGame() {
@@ -144,14 +143,14 @@ export default function ProposalGame() {
                                     backgroundColor: ['#ec4899', '#a855f7', '#ef4444', '#f59e0b', '#10b981'][i % 5],
                                 }}
                                 initial={{ y: -20, opacity: 1, rotate: 0 }}
-                                animate={{ 
-                                    y: 500, 
-                                    opacity: 0, 
+                                animate={{
+                                    y: 500,
+                                    opacity: 0,
                                     rotate: 720,
-                                    x: p.x 
+                                    x: p.x
                                 }}
-                                transition={{ 
-                                    duration: p.duration, 
+                                transition={{
+                                    duration: p.duration,
                                     delay: i * 0.05,
                                     repeat: 2,
                                     repeatDelay: 1
@@ -181,12 +180,7 @@ export default function ProposalGame() {
                     I Love You Forever ❤️
                 </motion.p>
 
-                <div className="mt-6 p-4 bg-white/5 rounded-xl border border-white/10">
-                    <p className="text-white/40 text-xs">
-                        I proposed on <strong className="text-pink-400">January 12, 2026</strong> and she said yes! 
-                        Best decision of my life. 💕
-                    </p>
-                </div>
+
 
                 <button
                     onClick={() => {
@@ -205,7 +199,7 @@ export default function ProposalGame() {
     }
 
     return (
-        <motion.div 
+        <motion.div
             className="space-y-6"
             animate={shakeScreen ? { x: [-5, 5, -5, 5, 0] } : {}}
             transition={{ duration: 0.4 }}
@@ -304,8 +298,8 @@ export default function ProposalGame() {
                                         💍
                                     </motion.div>
                                     <p className="text-white text-xl font-semibold leading-relaxed min-h-[3rem]">
-                                        <TypewriterText 
-                                            text={currentConvo.yesResponse} 
+                                        <TypewriterText
+                                            text={currentConvo.yesResponse}
                                             onComplete={() => setTypingDone(true)}
                                         />
                                     </p>
