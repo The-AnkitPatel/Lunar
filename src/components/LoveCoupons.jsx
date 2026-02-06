@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { loveCoupons } from '../data/gameData';
+import { saveGameResponse } from '../lib/tracking';
 import { useLoveContext } from '../hooks/useLoveContext';
 
 const categories = [
@@ -40,6 +41,14 @@ export default function LoveCoupons() {
         setTearingId(showConfirm.id);
         setTimeout(() => {
             redeemCoupon(showConfirm.id);
+
+            saveGameResponse({
+                gameType: 'love_coupons',
+                questionText: showConfirm.title,
+                responseText: `Redeemed: ${showConfirm.description}`,
+                responseData: { couponId: showConfirm.id, category: showConfirm.category, isSecret: showConfirm.isSecret || false }
+            });
+
             setTearingId(null);
             setShowConfirm(null);
         }, 800);

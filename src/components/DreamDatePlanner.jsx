@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { saveDreamDate } from '../lib/tracking';
+import { saveDreamDate, saveGameResponse } from '../lib/tracking';
 import { useAuth } from '../hooks/useAuth';
 import { dreamDateOptions, dreamDateResponses } from '../data/gameData';
 
@@ -36,6 +36,13 @@ export default function DreamDatePlanner() {
         const newSelections = { ...selections, [step]: option };
         setSelections(newSelections);
         setCustomInput('');
+
+        saveGameResponse({
+            gameType: 'dream_date',
+            questionText: `${stepLabels[step].title} - ${stepLabels[step].subtitle}`,
+            responseText: option.label,
+            responseData: { step, optionId: option.id, icon: option.icon, vibe: option.vibe }
+        });
 
         setTimeout(() => {
             if (currentStep < steps.length - 1) {

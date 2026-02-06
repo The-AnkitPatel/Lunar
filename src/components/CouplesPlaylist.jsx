@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { saveGameResponse } from '../lib/tracking';
 import { playlistSuggestions } from '../data/gameData';
 
 const moods = [
@@ -41,6 +42,14 @@ export default function CouplesPlaylist() {
         const key = `${song.title}-${song.artist}`;
         if (playlist.some(s => `${s.title}-${s.artist}` === key)) return;
         setPlaylist(prev => [...prev, { ...song, addedAt: Date.now() }]);
+
+        saveGameResponse({
+            gameType: 'couples_playlist',
+            questionText: 'Added song to playlist',
+            responseText: `${song.title} - ${song.artist}`,
+            responseData: { title: song.title, artist: song.artist, mood: song.mood, source: 'suggestion' }
+        });
+
         setAddedAnimation(key);
         setTimeout(() => setAddedAnimation(null), 1200);
     };
@@ -59,6 +68,14 @@ export default function CouplesPlaylist() {
             addedAt: Date.now()
         };
         setPlaylist(prev => [...prev, song]);
+
+        saveGameResponse({
+            gameType: 'couples_playlist',
+            questionText: 'Added custom song',
+            responseText: `${song.title} - ${song.artist}`,
+            responseData: { title: song.title, artist: song.artist, mood: 'custom', source: 'custom' }
+        });
+
         setCustomTitle('');
         setCustomArtist('');
         setShowCustom(false);

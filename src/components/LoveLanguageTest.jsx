@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { saveGameResponse } from '../lib/tracking';
 import { loveLanguageQuestions, loveLanguageResults } from '../data/gameData';
 
 export default function LoveLanguageTest() {
@@ -35,9 +36,27 @@ export default function LoveLanguageTest() {
             setAnswers(newAnswers);
             setSelectedOption(null);
 
+            saveGameResponse({
+                gameType: 'love_language_test',
+                questionText: question.question,
+                responseText: question.options.find(o => o.type === type)?.text || type,
+                responseData: { questionIndex: currentQ, selectedType: type, questionNumber: currentQ + 1 }
+            });
+
             if (currentQ < totalQ - 1) {
                 setCurrentQ(prev => prev + 1);
             } else {
+                // Track the final result
+                const counts = {};
+                newAnswers.forEach(t => { counts[t] = (counts[t] || 0) + 1; });
+                const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+                const primaryType = sorted[0]?.[0];
+                saveGameResponse({
+                    gameType: 'love_language_test',
+                    questionText: 'Test completed - Result',
+                    responseText: loveLanguageResults[primaryType]?.title || primaryType,
+                    responseData: { primaryType, counts, totalAnswers: newAnswers.length }
+                });
                 setShowResult(true);
             }
         }, 400);

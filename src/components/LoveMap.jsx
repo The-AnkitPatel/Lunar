@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { saveGameResponse } from '../lib/tracking';
 import { loveMapLocations } from '../data/gameData';
 
 export default function LoveMap() {
@@ -72,7 +73,17 @@ export default function LoveMap() {
                             initial={{ scale: 0, y: -20 }}
                             animate={{ scale: 1, y: 0 }}
                             transition={{ type: 'spring', delay: i * 0.2, damping: 12 }}
-                            onClick={() => setSelectedPin(isSelected ? null : loc)}
+                            onClick={() => {
+                                setSelectedPin(isSelected ? null : loc);
+                                if (!isSelected) {
+                                    saveGameResponse({
+                                        gameType: 'love_map',
+                                        questionText: `Viewed: ${loc.title}`,
+                                        responseText: loc.description,
+                                        responseData: { locationId: loc.id, icon: loc.icon }
+                                    });
+                                }
+                            }}
                             className="absolute z-10"
                             style={{ left: `${pos.x}%`, top: `${pos.y}%`, transform: 'translate(-50%, -50%)' }}
                         >

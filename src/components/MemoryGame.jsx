@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLoveContext } from '../hooks/useLoveContext';
+import { saveGameResponse } from '../lib/tracking';
 import { memoryCards } from '../data/gameData';
 import { cn } from '../lib/utils';
 
@@ -59,6 +60,13 @@ export default function MemoryGame() {
           setShowMemory(matchedCard.memory);
           setTimeout(() => setShowMemory(null), 2500);
         }
+
+        saveGameResponse({
+            gameType: 'memory_game',
+            questionText: `Matched pair: ${cards[first].emoji}`,
+            responseText: matchedCard?.memory || 'Match found',
+            responseData: { emoji: cards[first].emoji, matchNumber: newMatched.length, moves, combo: combo + 1 }
+        });
         
         // Combo system
         const newCombo = combo + 1;
@@ -78,6 +86,13 @@ export default function MemoryGame() {
             incrementStat('gamesPlayed');
             unlockAchievement('memory_master');
             showRomanticToast('romantic');
+
+            saveGameResponse({
+                gameType: 'memory_game',
+                questionText: 'Game completed!',
+                responseText: `Completed in ${moves + 1} moves`,
+                responseData: { totalMoves: moves + 1, totalPairs: memoryCards.length }
+            });
           }, 500);
         }
       } else {

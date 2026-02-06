@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLoveContext } from '../hooks/useLoveContext';
+import { saveGameResponse } from '../lib/tracking';
 import { wheelMessages, wheelCategories } from '../data/gameData';
 
 const segmentColors = [
@@ -83,6 +84,13 @@ export default function SpinWheel() {
       const newCount = spinCount + 1;
       setSpinCount(newCount);
       localStorage.setItem('spinCount', newCount.toString());
+
+      saveGameResponse({
+        gameType: 'spin_wheel',
+        questionText: `Spin #${newCount} (Category: ${selectedCategory})`,
+        responseText: won.text,
+        responseData: { icon: won.icon, category: won.category, spinNumber: newCount }
+      });
 
       if (newCount >= 3) {
         setShowHistory(true);

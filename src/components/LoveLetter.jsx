@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { loveFacts } from '../data/gameData';
+import { saveGameResponse } from '../lib/tracking';
 
 export default function LoveLetter() {
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -27,6 +28,13 @@ export default function LoveLetter() {
             if (!readLetters.includes(currentIndex)) {
                 setReadLetters(prev => [...prev, currentIndex]);
             }
+
+            saveGameResponse({
+                gameType: 'love_letter',
+                questionText: letter.envelope,
+                responseText: letter.text,
+                responseData: { letterIndex: currentIndex, seal: letter.seal }
+            });
         }, 1200);
     }, [currentIndex, isOpen, readLetters]);
 

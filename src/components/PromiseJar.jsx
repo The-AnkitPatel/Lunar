@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { promiseSlips } from '../data/gameData';
+import { saveGameResponse } from '../lib/tracking';
 import { useLoveContext } from '../hooks/useLoveContext';
 
 export default function PromiseJar() {
@@ -43,6 +44,14 @@ export default function PromiseJar() {
         setTimeout(() => {
             claimPromise(selectedPromise.id);
             setUnfoldingId(null);
+
+            saveGameResponse({
+                gameType: 'promise_jar',
+                questionText: 'Claimed a promise',
+                responseText: selectedPromise.promise,
+                responseData: { promiseId: selectedPromise.id, icon: selectedPromise.icon }
+            });
+
             // If this was the 5th promise, force show stats/list
             if (claimedPromises.length + 1 >= claimedLimit) {
                 setShowFulfilled(true);
@@ -51,9 +60,17 @@ export default function PromiseJar() {
     };
 
     const toggleFulfill = (id) => {
+        const wasFulfilled = fulfilledPromises.includes(id);
         setFulfilledPromises(prev =>
             prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
         );
+        const promise = promiseSlips.find(p => p.id === id);
+        saveGameResponse({
+            gameType: 'promise_jar',
+            questionText: wasFulfilled ? 'Unfulfilled a promise' : 'Fulfilled a promise',
+            responseText: promise?.promise || `Promise #${id}`,
+            responseData: { promiseId: id, fulfilled: !wasFulfilled }
+        });
     };
 
     // Auto-show fulfilled list if limit reached

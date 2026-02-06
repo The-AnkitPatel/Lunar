@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { saveGameResponse } from '../lib/tracking';
 
 const dreams = [
     {
@@ -75,6 +76,12 @@ export default function SecretGarden({ onClose }) {
         setRoseClicks(newCount);
         if (newCount >= ROSE_CLICKS) {
             setShowRose(true);
+            saveGameResponse({
+                gameType: 'secret_garden',
+                questionText: 'Found the Secret Rose easter egg',
+                responseText: 'Rose discovered after 7 clicks! 🌹',
+                responseData: { easterEgg: 'secret_rose', clicks: newCount }
+            });
         }
     };
 
@@ -101,7 +108,18 @@ export default function SecretGarden({ onClose }) {
                                 >
                                     <motion.button
                                         layout
-                                        onClick={() => setExpandedId(isExpanded ? null : dream.id)}
+                                        onClick={() => {
+                                            const willExpand = !isExpanded;
+                                            setExpandedId(willExpand ? dream.id : null);
+                                            if (willExpand) {
+                                                saveGameResponse({
+                                                    gameType: 'secret_garden',
+                                                    questionText: `Opened dream: ${dream.title}`,
+                                                    responseText: dream.text,
+                                                    responseData: { dreamId: dream.id, icon: dream.icon }
+                                                });
+                                            }
+                                        }}
                                         className={`w-full p-4 rounded-2xl border text-left transition-all bg-gradient-to-br ${dream.color} ${dream.border}`}
                                     >
                                         <motion.div layout="position" className="flex items-center gap-3 mb-1">

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLoveContext } from '../hooks/useLoveContext';
+import { saveGameResponse } from '../lib/tracking';
 import { scratchMessages } from '../data/gameData';
 
 export default function ScratchCard() {
@@ -131,7 +132,14 @@ export default function ScratchCard() {
     if (percent > 60 && !isScratched) {
       // Dissolve remaining
       setIsScratched(true);
-      
+
+      saveGameResponse({
+        gameType: 'scratch_card',
+        questionText: `Card #${currentCard + 1} (${card.rarity || 'common'})`,
+        responseText: card.message,
+        responseData: { cardIndex: currentCard, icon: card.icon, rarity: card.rarity || 'common' }
+      });
+
       // Fade out remaining canvas
       let opacity = 1;
       const fadeInterval = setInterval(() => {

@@ -21,6 +21,14 @@ const GAME_LABELS = {
     spin_wheel: '🎡 Spin Wheel',
     promise_jar: '🤞 Promise Jar',
     love_coupons: '🎟️ Love Coupons',
+    scratch_card: '🎴 Scratch Card',
+    love_letter: '💌 Love Letter',
+    memory_game: '🧩 Memory Game',
+    secret_garden: '🌿 Secret Garden',
+    love_map: '🗺️ Love Map',
+    love_language_test: '💕 Love Language',
+    couples_playlist: '🎵 Couples Playlist',
+    review_edit: '✏️ Review Edit',
 };
 
 export default function AdminDashboard({ onClose }) {
