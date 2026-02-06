@@ -249,8 +249,8 @@ function AppContent() {
 
         {/* Footer */}
         <footer className="mt-8 pt-6 border-t border-white/10 text-center">
-          <p className="font-script text-white/40 text-lg sm:text-xl leading-relaxed">
-            "And if I were able to write my own destiny, I would simply write your name and break the pen."
+          <p className="font-handwriting text-white/70 text-2xl sm:text-3xl leading-relaxed tracking-wide">
+            And if I were able to write my own destiny, I would simply write your name and break the pen.
           </p>
           <p className="text-rose-400/60 text-xs mt-2">— Forever Yours 💕</p>
         </footer>

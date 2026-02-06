@@ -57,7 +57,7 @@ export const valentinesDays = [
         className: "hug-day",
         title: "I Just Want To Hold You",
         message: "You know what I miss the most?\nBas you… in my arms.\n\nEven though we haven’t hugged yet,\nI can already feel it — jab hum milenge,\nI’ll hold you so close, jaise duniya thodi der ke liye ruk jaaye.\nNo rush, no words — just you and me, heart to heart.\n\nIn that hug, saari thakaan, saari worries… sab gayab ho jaayengi.\nAnd trust me, your place is not in anyone else’s arms —\nit’s right here, with me.",
-        quote: "One hug from you makes all my problems disappear... imagine what the real thing will be like.",
+        quote: "Kash tum kabhi jor se gale laga kr kaho darte kyu ho pagal tumhari hi to hu 🥰",
         signature: "Always yours 🤗"
     },
     {

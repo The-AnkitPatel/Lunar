@@ -24,32 +24,50 @@ const conversations = [
 export default function ProposalGame() {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [showResponse, setShowResponse] = useState(false);
-    const [noButtonPosition, setNoButtonPosition] = useState({ x: 0, y: 0 });
     const [noAttempts, setNoAttempts] = useState(0);
     const [completed, setCompleted] = useState(false);
 
+    // Dynamic sizing & positioning state
+    const [yesScale, setYesScale] = useState(1);
+    const [noScale, setNoScale] = useState(1);
+    const [noButtonPosition, setNoButtonPosition] = useState({ x: 0, y: 0 });
+
     const currentConvo = conversations[currentIndex];
+
+    // Reset scales when moving to next question
+    const resetScales = () => {
+        setYesScale(1);
+        setNoScale(1);
+        setNoAttempts(0);
+        setNoButtonPosition({ x: 0, y: 0 });
+    };
 
     const handleYes = () => {
         setShowResponse(true);
-        setNoAttempts(0);
-        setNoButtonPosition({ x: 0, y: 0 });
     };
 
     const handleNext = () => {
         if (currentIndex < conversations.length - 1) {
             setCurrentIndex(prev => prev + 1);
             setShowResponse(false);
+            resetScales();
         } else {
             setCompleted(true);
         }
     };
 
     const handleNo = () => {
-        // Move the No button to random position
-        const randomX = (Math.random() - 0.5) * 200;
-        const randomY = (Math.random() - 0.5) * 100;
+        // Increase Yes button scale
+        setYesScale(prev => Math.min(prev + 0.2, 3)); // Cap at 3x size
+
+        // Decrease No button scale
+        setNoScale(prev => Math.max(prev - 0.1, 0.5)); // Min at 0.5x size
+
+        // Move the No button to random position (keeping it somewhat clickable but moving)
+        const randomX = (Math.random() - 0.5) * 150; // -75 to 75
+        const randomY = (Math.random() - 0.5) * 100; // -50 to 50
         setNoButtonPosition({ x: randomX, y: randomY });
+
         setNoAttempts(prev => prev + 1);
     };
 
@@ -98,8 +116,7 @@ export default function ProposalGame() {
                         setCurrentIndex(0);
                         setShowResponse(false);
                         setCompleted(false);
-                        setNoAttempts(0);
-                        setNoButtonPosition({ x: 0, y: 0 });
+                        resetScales();
                     }}
                     className="mt-8 px-6 py-3 rounded-xl bg-white/10 text-white/60 hover:text-white transition-colors"
                 >
@@ -144,33 +161,43 @@ export default function ProposalGame() {
                                 <p className="text-white text-lg">{currentConvo.question}</p>
                             </div>
 
-                            {/* No attempts message */}
-                            {noAttempts > 0 && (
-                                <motion.p
-                                    initial={{ opacity: 0, y: -10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    className="text-rose-400 text-sm text-center mb-4"
-                                >
-                                    {getNoMessage()}
-                                </motion.p>
-                            )}
+                            {/* No attempts message - PERSISTENT */}
+                            <div className="h-6 mb-4 flex items-center justify-center">
+                                {noAttempts > 0 && (
+                                    <motion.p
+                                        key={noAttempts} // Re-animate on change
+                                        initial={{ opacity: 0, y: -10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className="text-rose-400 text-sm font-medium"
+                                    >
+                                        {getNoMessage()}
+                                    </motion.p>
+                                )}
+                            </div>
 
                             {/* Choice buttons */}
                             <div className="flex items-center justify-center gap-6 min-h-[100px] relative">
                                 <motion.button
-                                    whileHover={{ scale: 1.1 }}
-                                    whileTap={{ scale: 0.95 }}
+                                    // Use scale from state instead of hardcoded
+                                    animate={{ scale: yesScale }}
+                                    whileHover={{ scale: yesScale * 1.05 }}
+                                    whileTap={{ scale: yesScale * 0.95 }}
                                     onClick={handleYes}
-                                    className="px-8 py-4 rounded-xl bg-gradient-to-r from-rose-500 to-red-600 text-white font-semibold shadow-lg"
+                                    className="px-8 py-4 rounded-xl bg-gradient-to-r from-rose-500 to-red-600 text-white font-semibold shadow-lg transition-colors whitespace-nowrap"
                                 >
                                     Haan 💕
                                 </motion.button>
 
                                 <motion.button
-                                    animate={{ x: noButtonPosition.x, y: noButtonPosition.y }}
+                                    animate={{
+                                        scale: noScale,
+                                        x: noButtonPosition.x,
+                                        y: noButtonPosition.y
+                                    }}
                                     transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                                    whileHover={{ scale: noScale * 0.95 }}
                                     onClick={handleNo}
-                                    className="px-8 py-4 rounded-xl bg-white/10 text-white/70 hover:bg-white/20 transition-colors"
+                                    className="px-8 py-4 rounded-xl bg-white/10 text-white/70 hover:bg-white/20 transition-colors whitespace-nowrap"
                                 >
                                     Naa 😅
                                 </motion.button>
@@ -204,7 +231,7 @@ export default function ProposalGame() {
                                         💍
                                     </motion.div>
                                     <p className="text-white text-xl font-semibold leading-relaxed">
-                                        "{currentConvo.yesResponse}"
+                                        {currentConvo.yesResponse}
                                     </p>
                                     <motion.div
                                         animate={{ opacity: [0.5, 1, 0.5] }}
