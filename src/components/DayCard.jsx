@@ -1,9 +1,13 @@
 import { motion } from 'framer-motion';
+import ProposalResponse from './ProposalResponse';
 
 export default function DayCard({ dayData }) {
   if (!dayData) return null;
 
+  const isPropose = dayData.date === 8;
+
   return (
+    <div>
     <motion.div
       className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border border-white/10 overflow-hidden relative"
       initial={{ opacity: 0, y: 20 }}
@@ -25,6 +29,17 @@ export default function DayCard({ dayData }) {
         {dayData.title}
       </h2>
 
+      {/* Subtext - shown for Propose Day */}
+      {dayData.subtext && (
+        <div className="mb-4 mx-auto max-w-sm">
+          <div className="bg-gradient-to-r from-rose-500/10 via-pink-500/10 to-rose-500/10 rounded-xl p-3 border border-rose-500/20 text-center">
+            <p className="text-rose-200/90 text-sm italic leading-relaxed whitespace-pre-wrap">
+              {dayData.subtext}
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Message */}
       <p className="text-white/90 text-sm leading-relaxed text-center mb-4 font-light whitespace-pre-wrap">
         {dayData.message}
@@ -43,5 +58,9 @@ export default function DayCard({ dayData }) {
         {dayData.signature}
       </p>
     </motion.div>
+
+    {/* Proposal Response Box - Only on Propose Day */}
+    {isPropose && <ProposalResponse />}
+    </div>
   );
 }

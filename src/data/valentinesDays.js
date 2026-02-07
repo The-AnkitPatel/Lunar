@@ -16,9 +16,9 @@ export const valentinesDays = [
         icon: "💍",
         className: "propose-day",
         title: "Will You Stay Forever? 💍",
-        message: "I remember the day I finally said\nwhat my heart had been screaming for 2 years.\nJanuary 12, 2026, the day I proposed and you said YES.\n\nWe started as classmates in 4th class,\ngot separated in 9th,\nand the universe brought us back together\nthrough Instagram after JEE Advanced.\n\nI gave you hints, you refused,\nbut I never stopped trying.\n2 years of patience, hope, and love.\n\nAnd now?\nI'd propose to you again today, tomorrow,\nand every single day.\nKyuki tumhara haan sunna\nmere liye duniya ki sabse badi khushi hai.\n\nI don't need a fancy ring or a grand gesture.\nI just need your hand in mine,\nthrough the good days and the messy ones.\n\nTum mere liye sirf ek choice nahi ho,\ntum mera sukoon ho.\n\nWill you stay mine, forever?",
-        quote: "Log kehte hain pyaar ek baar hota hai,\npar mujhe tumse har din naya pyaar hota hai.\nI love you more than yesterday,\nbut less than Tomorrow!",
-        signature: "Only yours 💕"
+        message: "I remember the day I finally said\nwhat my heart had been screaming for 2 years.\nJanuary 12, 2026 — the day my world changed forever\nbecause you said YES. 💍\n\nWe started as classmates in 4th class,\ngot separated in 9th,\nand the universe brought us back together\nthrough Instagram after JEE Advanced.\n\nMaine hints diye, tumne mana kiya,\npar mera dil kabhi nahi maana.\n2 saal ka intezaar, umeed, aur sachcha pyaar.\n\nAaj phir se wahi baat, wahi sawaal...\nMeri jaan, meri duniya, meri zindagi —\nkya tum hamesha meri rahogi?\n\nMujhe kisi fancy ring ya grand gesture ki zaroorat nahi,\nbas tumhara haath chahiye mujhe,\nacche dinon mein bhi, aur mushkil raaton mein bhi.\n\nMain tumhare bina adhura hoon,\naur tumhare saath duniya ka sabse lucky insaan.\n\nSo here I am, proposing again...\nnot just for today, but for every tomorrow.\n\nWill you be mine, forever and always? 💕",
+        quote: "Waise hi itni mushkil se mili ho, kahi kho jaogi toh mein kaha jaunga\nTo my hardworking girl — be safe everyday, I love you...❤️😘",
+        signature: "Only yours, forever & always 💕"
     },
     {
         date: 9,
