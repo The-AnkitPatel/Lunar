@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { saveGameResponse, trackEvent } from '../lib/tracking';
+import { saveGameResponse, trackEvent, getGameResponses } from '../lib/tracking';
 
 const PROPOSAL_KEY = 'lunar_proposal_response';
 
@@ -34,6 +34,40 @@ async function syncProposalToSupabase() {
     }
 }
 
+/**
+ * Fetch proposal response from Supabase (cross-device support).
+ * If localStorage is empty but Supabase has a record, populate localStorage.
+ */
+async function fetchProposalFromSupabase() {
+    try {
+        const responses = await getGameResponses('proposal_forever');
+        if (responses && responses.length > 0) {
+            // Find the accepted response (most recent)
+            const accepted = responses.find(r =>
+                r.response_data?.accepted || r.responseData?.accepted
+            );
+            if (accepted) {
+                const rd = accepted.response_data || accepted.responseData || {};
+                const data = {
+                    accepted: true,
+                    response: accepted.response_text || accepted.answer || 'Haan! Proposal Accepted Forever! 💍❤️',
+                    respondedAt: rd.respondedAt || accepted.created_at,
+                    noAttempts: rd.noAttempts || 0,
+                    synced: true, // It came FROM the DB, so it's synced
+                    fetchedFromDb: true,
+                };
+                // Save to this device's localStorage so it works offline too
+                localStorage.setItem(PROPOSAL_KEY, JSON.stringify(data));
+                console.log('[ProposalResponse] ✅ Fetched from Supabase & saved to localStorage');
+                return data;
+            }
+        }
+    } catch (e) {
+        console.error('[ProposalResponse] Fetch from Supabase error:', e);
+    }
+    return null;
+}
+
 export default function ProposalResponse() {
     // Initialize state from localStorage synchronously
     const storedData = (() => {
@@ -47,6 +81,7 @@ export default function ProposalResponse() {
     const [hasResponded, setHasResponded] = useState(!!storedData?.accepted);
     const [accepted, setAccepted] = useState(!!storedData?.accepted);
     const [responseData, setResponseData] = useState(storedData);
+    const [loading, setLoading] = useState(!storedData); // Loading if no local data
     const [noAttempts, setNoAttempts] = useState(0);
     const [showCelebration, setShowCelebration] = useState(false);
     const [noMessage, setNoMessage] = useState('');
@@ -59,13 +94,29 @@ export default function ProposalResponse() {
             color: ['#ec4899', '#a855f7', '#ef4444', '#f59e0b', '#10b981'][i % 5],
         })));
 
-    // On mount: sync to Supabase & track revisit
+    // On mount: if localStorage has data → sync to Supabase
+    // If localStorage is EMPTY → fetch from Supabase (cross-device support)
     useEffect(() => {
         if (storedData?.accepted) {
+            // Has local data → sync it to DB (in case it wasn't synced yet)
             syncProposalToSupabase();
             trackEvent('proposal_response_revisit', 'proposal_forever', {
                 previousResponse: storedData.response,
                 previousDate: storedData.respondedAt,
+            });
+            setLoading(false);
+        } else {
+            // No local data → check Supabase (maybe she responded on another device)
+            fetchProposalFromSupabase().then((dbData) => {
+                if (dbData) {
+                    setResponseData(dbData);
+                    setHasResponded(true);
+                    setAccepted(true);
+                    trackEvent('proposal_response_loaded_from_db', 'proposal_forever', {
+                        respondedAt: dbData.respondedAt,
+                    });
+                }
+                setLoading(false);
             });
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -130,6 +181,24 @@ export default function ProposalResponse() {
             setNoMessage("Bas bas... ab toh maan jao na madam ji! Sirf haan ka option hai ab! 💕😘");
         }
     };
+
+    // Loading state while checking Supabase
+    if (loading) {
+        return (
+            <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="mt-4 text-center py-6"
+            >
+                <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                    className="inline-block w-6 h-6 border-2 border-pink-500/30 border-t-pink-500 rounded-full mb-2"
+                />
+                <p className="text-white/40 text-xs">Loading proposal status...</p>
+            </motion.div>
+        );
+    }
 
     // Already accepted - show what she accepted
     if (hasResponded && accepted) {
