@@ -62,7 +62,7 @@ const bonusFeatures = [
 ];
 
 import { useVisitTracker } from './hooks/useVisitTracker';
-import { trackFeatureOpen, trackFeatureClose } from './lib/tracking';
+import { trackFeatureOpen, trackFeatureClose, trackEvent } from './lib/tracking';
 
 function AppContent() {
   useVisitTracker();
@@ -252,6 +252,7 @@ function AppContent() {
                         unlockDate: unlockDate,
                         message: feature.lockedMessage // Pass custom message
                       });
+                      trackEvent('locked_day_tap', feature.name, { day: feature.day });
                       setShowLockModal(true);
                       return;
                     }
@@ -283,7 +284,7 @@ function AppContent() {
             {/* SECRET GIFT ROW - Only visible after Valentine's Day */}
             {showSecret && (
               <motion.button
-                onClick={() => setSecretOpen(true)}
+                onClick={() => { trackFeatureOpen('secret_garden'); setSecretOpen(true); }}
                 className={cn(
                   "flex-shrink-0 snap-start flex flex-col items-center gap-1 p-3 min-w-[72px] rounded-xl border transition-all duration-200 active:scale-95",
                   "bg-gradient-to-br from-rose-900/50 to-purple-900/50 border-rose-500/30 hover:border-rose-400"
@@ -409,7 +410,7 @@ function AppContent() {
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   whileHover={{ scale: 1.02 }}
-                  onClick={() => setSecretOpen(true)}
+                  onClick={() => { trackFeatureOpen('secret_garden'); setSecretOpen(true); }}
                   className="w-full mt-6 bg-gradient-to-r from-rose-900/50 to-red-900/50 border border-rose-500/30 p-4 rounded-xl flex items-center gap-4 group"
                 >
                   <div className="bg-rose-500/20 p-3 rounded-full group-hover:bg-rose-500/30 transition-colors">

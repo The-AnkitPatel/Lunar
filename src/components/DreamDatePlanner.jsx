@@ -86,6 +86,28 @@ export default function DreamDatePlanner() {
                 comment: comment
             });
 
+            // Also save the final summary + comment to game_responses
+            // so it shows in the admin dashboard
+            const summaryParts = [];
+            if (selections.location) summaryParts.push(`📍 ${selections.location.label}`);
+            if (selections.activity) summaryParts.push(`🎯 ${selections.activity.label}`);
+            if (selections.food) summaryParts.push(`🍽️ ${selections.food.label}`);
+            if (selections.time) summaryParts.push(`🕐 ${selections.time.label}`);
+
+            saveGameResponse({
+                gameType: 'dream_date',
+                questionText: 'Dream Date Plan (Final)',
+                responseText: comment?.trim() ? comment.trim() : summaryParts.join(' | '),
+                responseData: {
+                    step: 'final',
+                    location: selections.location?.label,
+                    activity: selections.activity?.label,
+                    food: selections.food?.label,
+                    time: selections.time?.label,
+                    comment: comment || null,
+                }
+            });
+
             setShowResult(true);
         } catch (err) {
             console.error('Error saving date:', err);

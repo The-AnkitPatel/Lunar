@@ -229,3 +229,69 @@ export async function updateSessionHeartbeat(sessionId) {
         .update({ last_active_at: new Date().toISOString() })
         .eq('id', sessionId);
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// AUTO-MIGRATION: Fix old fake sessions with invalid user IDs
+// ═══════════════════════════════════════════════════════════════════════════
+
+const GF_USER_ID = "c6b344cb-705f-4567-9b76-63d28ed33115";
+const ADMIN_USER_ID = "9b9ebf95-6e32-455e-977a-ec907a89b19d";
+
+/**
+ * Migrate old fake sessions that have invalid user IDs (like 'special-her-id-xxx')
+ * This runs on app load to fix sessions from before the fix was deployed
+ */
+export function migrateFakeSession() {
+    try {
+        const fakeSessionStr = localStorage.getItem('lunar_fake_session');
+        if (!fakeSessionStr) return null;
+
+        const fakeSession = JSON.parse(fakeSessionStr);
+        const userId = fakeSession?.user?.id;
+        const role = fakeSession?.user?.user_metadata?.role;
+
+        // Check if it's an old invalid ID (starts with 'special-' or doesn't look like a UUID)
+        const isInvalidId = !userId ||
+            userId.startsWith('special-') ||
+            userId.length < 36 ||
+            !userId.includes('-');
+
+        if (isInvalidId && role) {
+            console.log('[Auth] Migrating old fake session with invalid ID:', userId);
+
+            // Determine correct user ID based on role
+            const correctId = role === 'gf' ? GF_USER_ID :
+                role === 'admin' ? ADMIN_USER_ID : null;
+
+            if (correctId) {
+                // Update the session with correct ID
+                fakeSession.user.id = correctId;
+                localStorage.setItem('lunar_fake_session', JSON.stringify(fakeSession));
+                console.log('[Auth] ✅ Migrated fake session to correct ID:', correctId);
+
+                // Create new auth_session in database
+                logDeviceInfo(correctId).then(sessionId => {
+                    if (sessionId) {
+                        localStorage.setItem('current_session_id', sessionId);
+                        console.log('[Auth] ✅ Created new auth session:', sessionId);
+                    }
+                });
+
+                return fakeSession;
+            }
+        }
+
+        return fakeSession;
+    } catch (e) {
+        console.error('[Auth] Error migrating fake session:', e);
+        return null;
+    }
+}
+
+// Auto-run migration on module load
+if (typeof window !== 'undefined') {
+    // Run after a short delay to ensure localStorage is available
+    setTimeout(() => {
+        migrateFakeSession();
+    }, 100);
+}

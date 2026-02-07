@@ -2,13 +2,15 @@ import { supabase } from './supabase';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // BULLETPROOF TRACKING SYSTEM - MULTIPLE FALLBACK LAYERS
+// Every response & event is saved locally FIRST, then pushed to DB.
+// On every page load, ALL unsynced local items are force-pushed to DB.
 // ═══════════════════════════════════════════════════════════════════════════
 
 const FAILED_QUEUE_KEY = 'lunar_failed_tracking_queue';
 const LOCAL_RESPONSES_KEY = 'lunar_local_responses';
 const LOCAL_EVENTS_KEY = 'lunar_local_events';
-const MAX_RETRIES = 3;
-const RETRY_DELAY = 2000; // 2 seconds
+const MAX_RETRIES = 5;
+const RETRY_DELAY = 1500; // 1.5 seconds
 
 /**
  * LAYER 1: Get current user ID with multiple fallback sources
@@ -55,8 +57,8 @@ function saveToLocalBackup(type, data) {
             local_timestamp: new Date().toISOString(),
             synced: false
         });
-        // Keep last 500 items
-        const trimmed = existing.slice(-500);
+        // Keep last 5000 items — never lose anything
+        const trimmed = existing.slice(-5000);
         localStorage.setItem(key, JSON.stringify(trimmed));
         console.log(`[Tracking] Backed up ${type} to localStorage`);
         return true;
@@ -78,7 +80,7 @@ function addToRetryQueue(type, payload) {
             attempts: 0,
             created_at: new Date().toISOString()
         });
-        localStorage.setItem(FAILED_QUEUE_KEY, JSON.stringify(queue.slice(-100)));
+        localStorage.setItem(FAILED_QUEUE_KEY, JSON.stringify(queue.slice(-2000)));
         console.log('[Tracking] Added to retry queue');
     } catch (e) {
         console.error('[Tracking] Failed to add to retry queue:', e);
@@ -117,7 +119,9 @@ export async function processRetryQueue() {
             if (!success && item.attempts < MAX_RETRIES) {
                 remaining.push(item);
             } else if (success) {
-                console.log('[Tracking] Successfully synced queued item!');
+                console.log('[Tracking] ✅ Successfully synced queued item!');
+            } else {
+                console.warn('[Tracking] ⚠️ Item exceeded max retries, dropping:', item);
             }
         }
 
@@ -412,13 +416,241 @@ export function getLocalBackup() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// AUTO-SYNC: Process retry queue every 60 seconds
+// AGGRESSIVE SYNC: Push ALL unsynced localStorage items to database
+// This runs on every page load to catch anything that failed before.
+// Deduplicates by checking question_text + response_text + game_type
+// Also scans EXTRA localStorage keys used by individual game components
+// ═══════════════════════════════════════════════════════════════════════════
+
+// Extra localStorage keys that game components use for local-only data
+const EXTRA_LS_GAME_KEYS = [
+    { key: 'spinHistory', gameType: 'spin_wheel', label: 'Spin Wheel History' },
+    { key: 'couplesPlaylist', gameType: 'couples_playlist', label: 'Couples Playlist' },
+    { key: 'fulfilledPromises', gameType: 'promise_jar', label: 'Promise Jar' },
+    { key: 'readLetters', gameType: 'love_letter', label: 'Read Letters' },
+    { key: 'redeemedCoupons', gameType: 'love_coupons', label: 'Redeemed Coupons' },
+    { key: 'claimedPromises', gameType: 'promise_jar_claimed', label: 'Claimed Promises' },
+    { key: 'completedBucketItems', gameType: 'bucket_list', label: 'Bucket List Items' },
+];
+
+let _syncRunning = false;
+
+/**
+ * Force-sync all unsynced local responses & events to the database.
+ * Called automatically on every page load.
+ */
+export async function syncAllLocalData() {
+    if (_syncRunning) return;
+    _syncRunning = true;
+
+    const userId = await getCurrentUserId();
+    if (!userId) {
+        console.warn('[Sync] No user ID, skipping sync');
+        _syncRunning = false;
+        return;
+    }
+
+    console.log('[Sync] ═══ Starting aggressive local→DB sync ═══');
+
+    // ── 1. Sync unsynced RESPONSES ──
+    try {
+        const localResponses = JSON.parse(localStorage.getItem(LOCAL_RESPONSES_KEY) || '[]');
+        const unsynced = localResponses.filter(r => !r.synced);
+        console.log(`[Sync] Found ${unsynced.length} unsynced responses out of ${localResponses.length} total`);
+
+        if (unsynced.length > 0) {
+            // Fetch existing responses from DB to avoid duplicates
+            const { data: existingDb } = await supabase
+                .from('game_responses')
+                .select('game_type, question_text, response_text, created_at')
+                .eq('user_id', userId)
+                .order('created_at', { ascending: false })
+                .limit(5000);
+
+            const existingSet = new Set(
+                (existingDb || []).map(r =>
+                    `${r.game_type}||${r.question_text}||${r.response_text}`
+                )
+            );
+
+            let syncedCount = 0;
+            for (const item of unsynced) {
+                const gameType = item.game_type || item.gameType;
+                const questionText = item.question_text || item.questionText;
+                const responseText = item.response_text || item.responseText;
+                const responseData = item.response_data || item.responseData || {};
+
+                // Skip if already in DB
+                const key = `${gameType}||${questionText}||${responseText}`;
+                if (existingSet.has(key)) {
+                    item.synced = true;
+                    syncedCount++;
+                    continue;
+                }
+
+                // Push to DB
+                const payload = {
+                    user_id: userId,
+                    session_id: item.session_id || localStorage.getItem('current_session_id') || null,
+                    game_type: gameType,
+                    question_text: questionText,
+                    response_text: responseText,
+                    response_data: responseData,
+                };
+
+                try {
+                    const { error } = await supabase
+                        .from('game_responses')
+                        .insert(payload);
+
+                    if (!error) {
+                        item.synced = true;
+                        existingSet.add(key);
+                        syncedCount++;
+                        console.log(`[Sync] ✅ Pushed response: ${gameType} — "${(responseText || '').substring(0, 50)}"`);
+                    } else {
+                        console.warn('[Sync] Insert failed:', error.message);
+                    }
+                } catch (e) {
+                    console.warn('[Sync] Error inserting response:', e.message);
+                }
+            }
+
+            // Write back with updated synced flags
+            localStorage.setItem(LOCAL_RESPONSES_KEY, JSON.stringify(localResponses));
+            console.log(`[Sync] Responses: ${syncedCount} synced out of ${unsynced.length} unsynced`);
+        }
+    } catch (e) {
+        console.error('[Sync] Error syncing responses:', e);
+    }
+
+    // ── 2. Sync unsynced EVENTS ──
+    try {
+        const localEvents = JSON.parse(localStorage.getItem(LOCAL_EVENTS_KEY) || '[]');
+        const unsyncedEvents = localEvents.filter(e => !e.synced);
+        console.log(`[Sync] Found ${unsyncedEvents.length} unsynced events out of ${localEvents.length} total`);
+
+        if (unsyncedEvents.length > 0) {
+            let syncedCount = 0;
+            for (const item of unsyncedEvents) {
+                const payload = {
+                    user_id: userId,
+                    session_id: item.session_id || localStorage.getItem('current_session_id') || null,
+                    event_type: item.event_type || item.eventType,
+                    feature_name: item.feature_name || item.featureName || null,
+                    metadata: item.metadata || {},
+                };
+
+                try {
+                    const { error } = await supabase
+                        .from('visit_events')
+                        .insert(payload);
+
+                    if (!error) {
+                        item.synced = true;
+                        syncedCount++;
+                    }
+                } catch (e) {
+                    // Skip silently — events are less critical
+                }
+            }
+
+            localStorage.setItem(LOCAL_EVENTS_KEY, JSON.stringify(localEvents));
+            console.log(`[Sync] Events: ${syncedCount} synced out of ${unsyncedEvents.length} unsynced`);
+        }
+    } catch (e) {
+        console.error('[Sync] Error syncing events:', e);
+    }
+
+    // ── 3. Sync EXTRA localStorage game data ──
+    // These are local-only keys used by individual game components
+    // We sync them as game_responses so they show in admin dashboard
+    try {
+        for (const { key: lsKey, gameType, label } of EXTRA_LS_GAME_KEYS) {
+            const raw = localStorage.getItem(lsKey);
+            if (!raw) continue;
+
+            try {
+                const data = JSON.parse(raw);
+                if (!data || (Array.isArray(data) && data.length === 0)) continue;
+
+                // Check if we already synced this specific key
+                const syncFlagKey = `_synced_${lsKey}`;
+                const lastSyncedHash = localStorage.getItem(syncFlagKey);
+                const currentHash = JSON.stringify(data).length.toString();
+
+                if (lastSyncedHash === currentHash) continue; // Already synced this version
+
+                // Check if this data already exists in DB
+                const { data: existing } = await supabase
+                    .from('game_responses')
+                    .select('id')
+                    .eq('user_id', userId)
+                    .eq('game_type', gameType)
+                    .eq('question_text', `[LOCAL] ${label}`)
+                    .limit(1);
+
+                const responseText = Array.isArray(data)
+                    ? data.map(d => typeof d === 'object' ? JSON.stringify(d) : String(d)).join(', ')
+                    : JSON.stringify(data);
+
+                if (existing && existing.length > 0) {
+                    // Update existing record with latest data
+                    await supabase
+                        .from('game_responses')
+                        .update({
+                            response_text: responseText.substring(0, 5000),
+                            response_data: { localStorageKey: lsKey, rawData: data, updated_at: new Date().toISOString() },
+                        })
+                        .eq('id', existing[0].id);
+                } else {
+                    // Insert new record
+                    await supabase
+                        .from('game_responses')
+                        .insert({
+                            user_id: userId,
+                            session_id: localStorage.getItem('current_session_id') || null,
+                            game_type: gameType,
+                            question_text: `[LOCAL] ${label}`,
+                            response_text: responseText.substring(0, 5000),
+                            response_data: { localStorageKey: lsKey, rawData: data, synced_at: new Date().toISOString() },
+                        });
+                }
+
+                localStorage.setItem(syncFlagKey, currentHash);
+                console.log(`[Sync] ✅ Synced extra LS key: ${lsKey}`);
+            } catch (e) {
+                console.warn(`[Sync] Error syncing ${lsKey}:`, e.message);
+            }
+        }
+    } catch (e) {
+        console.error('[Sync] Error syncing extra LS keys:', e);
+    }
+
+    // ── 4. Also process the retry queue ──
+    await processRetryQueue();
+
+    console.log('[Sync] ═══ Sync complete ═══');
+    _syncRunning = false;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// AUTO-SYNC: Aggressive — runs on load + every 30 seconds
+// Realtime tracking is handled by Supabase WebSocket (ms-level instant)
+// This sync only catches localStorage items that failed to save to DB
 // ═══════════════════════════════════════════════════════════════════════════
 if (typeof window !== 'undefined') {
+    // Process retry queue every 20 seconds
     setInterval(() => {
         processRetryQueue();
-    }, 60000);
+    }, 20000);
 
-    // Also process on page load after a delay
-    setTimeout(processRetryQueue, 5000);
+    // Full sync on page load after short delay (catches morning's lost data)
+    setTimeout(syncAllLocalData, 2000);
+
+    // Second sync after 15s (in case auth wasn't ready on first try)
+    setTimeout(syncAllLocalData, 15000);
+
+    // Periodic full sync every 60 seconds
+    setInterval(syncAllLocalData, 60000);
 }

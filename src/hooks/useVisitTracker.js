@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { updateSessionHeartbeat } from '../lib/auth';
-import { trackPageView, trackEvent } from '../lib/tracking';
+import { trackPageView, trackEvent, syncAllLocalData } from '../lib/tracking';
 
 export const useVisitTracker = () => {
     const pageOpenTime = useRef(Date.now());
@@ -9,6 +9,12 @@ export const useVisitTracker = () => {
         // Track initial page view
         trackPageView();
         pageOpenTime.current = Date.now();
+
+        // ══ AGGRESSIVE SYNC: Push any unsynced localStorage data to DB ══
+        // This catches her responses that were saved locally but never made it to DB
+        syncAllLocalData().catch(err => {
+            console.warn('[VisitTracker] Sync failed, will retry:', err);
+        });
 
         // Heartbeat: update session every 30 seconds
         const heartbeatInterval = setInterval(() => {

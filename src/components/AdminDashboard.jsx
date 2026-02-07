@@ -11,6 +11,9 @@ const TABS = [
     { id: 'activity', label: 'Activity', icon: '⚡' },
 ];
 
+// Admin user ID — used to EXCLUDE admin from GF activity feeds
+const ADMIN_USER_ID = '9b9ebf95-6e32-455e-977a-ec907a89b19d';
+
 const GAME_LABELS = {
     truth_or_love: '🔥 Truth or Love',
     would_you_rather: '💭 Would You Rather',
@@ -18,6 +21,7 @@ const GAME_LABELS = {
     love_quiz: '🧠 Love Quiz',
     proposal: '💍 Proposal',
     dream_date: '🌹 Dream Date',
+    dream_date_comment: '🌹 Dream Date Comment',
     spin_wheel: '🎡 Spin Wheel',
     promise_jar: '🤞 Promise Jar',
     love_coupons: '🎟️ Love Coupons',
@@ -30,6 +34,13 @@ const GAME_LABELS = {
     couples_playlist: '🎵 Couples Playlist',
     review_edit: '✏️ Review Edit',
 };
+
+// Helper: returns true if this row belongs to the admin
+function isAdminRow(row) {
+    if (row.profiles?.role === 'admin') return true;
+    if (row.user_id === ADMIN_USER_ID) return true;
+    return false;
+}
 
 export default function AdminDashboard({ onClose }) {
     const [activeTab, setActiveTab] = useState('overview');
@@ -68,22 +79,22 @@ export default function AdminDashboard({ onClose }) {
                     .from('auth_sessions')
                     .select(`*, device_logs(*), profiles:user_id(display_name, role)`)
                     .order('login_at', { ascending: false })
-                    .limit(100),
+                    .limit(10000),
                 supabase
                     .from('game_responses')
                     .select(`*, profiles:user_id(display_name, role)`)
                     .order('created_at', { ascending: false })
-                    .limit(200),
+                    .limit(10000),
                 supabase
                     .from('visit_events')
                     .select(`*, profiles:user_id(display_name, role)`)
                     .order('created_at', { ascending: false })
-                    .limit(200),
+                    .limit(10000),
                 supabase
                     .from('device_logs')
                     .select(`*, profiles:user_id(display_name, role)`)
                     .order('logged_in_at', { ascending: false })
-                    .limit(50),
+                    .limit(10000),
             ]);
 
             if (sessionsRes.data) setSessions(sessionsRes.data);
@@ -102,12 +113,9 @@ export default function AdminDashboard({ onClose }) {
         fetchAllData();
     }, [fetchAllData]);
 
-    // Auto-refresh every 30s
-    useEffect(() => {
-        if (!autoRefresh) return;
-        const interval = setInterval(() => fetchAllData(true), 30000);
-        return () => clearInterval(interval);
-    }, [autoRefresh, fetchAllData]);
+    // NO POLLING — Realtime subscriptions handle instant updates via WebSocket.
+    // Manual refresh button available for on-demand data reload.
+    // Realtime is ms-level instant (WebSocket push, not polling).
 
     // ── Comprehensive Real-time subscriptions ──
     // Listen to ALL tracking tables for instant updates
@@ -117,6 +125,8 @@ export default function AdminDashboard({ onClose }) {
             // ── DEVICE LOGS: New device login detected ──
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'device_logs' }, (payload) => {
                 const log = payload.new;
+                // Skip admin's own device logs
+                if (log.user_id === ADMIN_USER_ID) return;
                 setDeviceLogs(prev => [log, ...prev]);
                 addLiveNotification(
                     'login',
@@ -134,21 +144,24 @@ export default function AdminDashboard({ onClose }) {
             // ── AUTH SESSIONS: New session created or updated ──
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'auth_sessions' }, (payload) => {
                 const sess = payload.new;
+                if (sess.user_id === ADMIN_USER_ID) { setSessions(prev => [sess, ...prev]); return; }
                 setSessions(prev => [sess, ...prev]);
                 addLiveNotification(
                     'session',
-                    `🟢 New session started!`,
+                    `🟢 She just opened the site! New session started!`,
                     { sessionId: sess.id, userId: sess.user_id }
                 );
             })
             .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'auth_sessions' }, (payload) => {
                 const sess = payload.new;
                 setSessions(prev => prev.map(s => s.id === sess.id ? { ...s, ...sess } : s));
+                // Skip admin sessions for notifications
+                if (sess.user_id === ADMIN_USER_ID) return;
                 // If session became inactive (logout)
                 if (sess.is_active === false && payload.old?.is_active === true) {
                     addLiveNotification(
                         'logout',
-                        `🔴 Session ended (logged out)`,
+                        `🔴 She left the site! Session ended`,
                         { sessionId: sess.id }
                     );
                 }
@@ -157,9 +170,11 @@ export default function AdminDashboard({ onClose }) {
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'game_responses' }, (payload) => {
                 const resp = payload.new;
                 setGameResponses(prev => [resp, ...prev]);
+                // Skip notifications for admin's own responses
+                if (resp.user_id === ADMIN_USER_ID) return;
                 addLiveNotification(
                     'game_response',
-                    `💌 New ${GAME_LABELS[resp.game_type] || resp.game_type} response!`,
+                    `💌 She responded in ${GAME_LABELS[resp.game_type] || resp.game_type}!`,
                     {
                         gameType: resp.game_type,
                         question: resp.question_text,
@@ -169,10 +184,11 @@ export default function AdminDashboard({ onClose }) {
             })
             .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'game_responses' }, (payload) => {
                 setGameResponses(prev => prev.map(r => r.id === payload.new.id ? { ...r, ...payload.new } : r));
+                if (payload.new.user_id === ADMIN_USER_ID) return;
                 if (payload.new.is_edited) {
                     addLiveNotification(
                         'game_edit',
-                        `✏️ Response was edited in ${GAME_LABELS[payload.new.game_type] || payload.new.game_type}`,
+                        `✏️ She edited her answer in ${GAME_LABELS[payload.new.game_type] || payload.new.game_type}`,
                         { answer: payload.new.response_text }
                     );
                 }
@@ -181,19 +197,26 @@ export default function AdminDashboard({ onClose }) {
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'visit_events' }, (payload) => {
                 const event = payload.new;
                 setVisitEvents(prev => [event, ...prev]);
-                // Only notify for meaningful events
+                // Skip admin's own events (we only want GF notifications)
+                if (event.user_id === ADMIN_USER_ID) return;
+                // Notify for ALL her events
                 if (event.event_type === 'page_view') {
-                    addLiveNotification('page_view', `🏠 Opened the site!`, {});
+                    addLiveNotification('page_view', `🏠 She opened the site!`, {});
                 } else if (event.event_type === 'feature_open') {
-                    addLiveNotification('feature_open', `▶️ Opened: ${event.feature_name}`, { feature: event.feature_name });
+                    addLiveNotification('feature_open', `▶️ She opened: ${event.feature_name}`, { feature: event.feature_name });
                 } else if (event.event_type === 'feature_close') {
-                    addLiveNotification('feature_close', `⏹️ Closed: ${event.feature_name}`, { feature: event.feature_name });
+                    addLiveNotification('feature_close', `⏹️ She closed: ${event.feature_name}`, { feature: event.feature_name });
                 } else if (event.event_type === 'page_close') {
-                    addLiveNotification('page_close', `🚪 Left the site`, {});
+                    addLiveNotification('page_close', `🚪 She left the site!`, {});
                 } else if (event.event_type === 'tab_hidden') {
-                    addLiveNotification('tab_hidden', `👻 Switched away from tab`, {});
+                    addLiveNotification('tab_hidden', `👻 She switched away from tab`, {});
                 } else if (event.event_type === 'tab_visible') {
-                    addLiveNotification('tab_visible', `👁️ Came back to the tab`, {});
+                    addLiveNotification('tab_visible', `👁️ She came back to the tab!`, {});
+                } else if (event.event_type === 'locked_day_tap') {
+                    addLiveNotification('locked_day_tap', `🔒 She tried to open a locked day: ${event.feature_name}`, { feature: event.feature_name });
+                } else {
+                    // Catch-all for any new event types
+                    addLiveNotification(event.event_type, `📡 ${event.event_type}: ${event.feature_name || ''}`, { feature: event.feature_name });
                 }
             })
             .subscribe((status) => {
@@ -204,8 +227,18 @@ export default function AdminDashboard({ onClose }) {
     }, [addLiveNotification]);
 
     // ── Derived Stats ──
-    const gfSessions = sessions.filter(s => s.profiles?.role === 'gf');
-    const gfResponses = gameResponses.filter(r => r.profiles?.role === 'gf' || !r.profiles);
+    // STRATEGY: Exclude admin rows → everything else is GF activity
+    // This catches ALL her activity even when profiles join is missing (realtime)
+    const gfSessions = sessions.filter(s => !isAdminRow(s));
+    const gfResponses = gameResponses.filter(r => !isAdminRow(r));
+    const gfEvents = visitEvents.filter(e => !isAdminRow(e));
+
+    // Debug logging
+    console.log('[AdminDashboard] Total gameResponses:', gameResponses.length, '| GF:', gfResponses.length);
+    console.log('[AdminDashboard] Total visitEvents:', visitEvents.length, '| GF:', gfEvents.length);
+    console.log('[AdminDashboard] Total sessions:', sessions.length, '| GF:', gfSessions.length);
+    if (gameResponses.length > 0) console.log('[AdminDashboard] Sample response:', gameResponses[0]);
+    if (gfResponses.length > 0) console.log('[AdminDashboard] Sample GF response:', gfResponses[0]);
 
     const lastSeen = gfSessions.length > 0
         ? formatDate(gfSessions[0].last_active_at || gfSessions[0].login_at)
@@ -264,9 +297,9 @@ export default function AdminDashboard({ onClose }) {
                         <button
                             onClick={() => setAutoRefresh(!autoRefresh)}
                             className={`text-xs px-2 py-1 rounded-lg transition-colors ${autoRefresh ? 'bg-green-500/20 text-green-300' : 'bg-white/10 text-white/40'}`}
-                            title={autoRefresh ? 'Auto-refresh ON' : 'Auto-refresh OFF'}
+                            title="Realtime is always active via WebSocket"
                         >
-                            {autoRefresh ? '🔄 Live' : '⏸ Paused'}
+                            {autoRefresh ? '📡 Realtime' : '📡 Realtime'}
                         </button>
                         <button
                             onClick={() => fetchAllData(true)}
@@ -290,11 +323,10 @@ export default function AdminDashboard({ onClose }) {
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
-                            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
-                                activeTab === tab.id
-                                    ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
-                                    : 'text-white/50 hover:text-white/70 hover:bg-white/5'
-                            }`}
+                            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${activeTab === tab.id
+                                ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                                : 'text-white/50 hover:text-white/70 hover:bg-white/5'
+                                }`}
                         >
                             <span>{tab.icon}</span>
                             {tab.label}
@@ -449,11 +481,10 @@ function LiveTab({ liveActivity, liveNotifications, isOnlineNow, visitEvents, de
     return (
         <div className="space-y-4">
             {/* Live Status */}
-            <div className={`p-4 rounded-xl border flex items-center gap-3 ${
-                isOnlineNow
-                    ? 'bg-gradient-to-r from-green-500/20 to-emerald-500/20 border-green-500/30'
-                    : 'bg-gradient-to-r from-red-500/10 to-rose-500/10 border-red-500/20'
-            }`}>
+            <div className={`p-4 rounded-xl border flex items-center gap-3 ${isOnlineNow
+                ? 'bg-gradient-to-r from-green-500/20 to-emerald-500/20 border-green-500/30'
+                : 'bg-gradient-to-r from-red-500/10 to-rose-500/10 border-red-500/20'
+                }`}>
                 <div className="relative">
                     <span className="text-3xl">{isOnlineNow ? '💚' : '💤'}</span>
                     {isOnlineNow && (
@@ -564,10 +595,10 @@ function OverviewTab({ gfSessions, gfResponses, lastSeen, isOnlineNow, uniqueDev
     const hours = Math.floor(totalTimeMs / (1000 * 60 * 60));
     const minutes = Math.floor((totalTimeMs % (1000 * 60 * 60)) / (1000 * 60));
 
-    // Recent activity timeline
+    // Recent activity timeline — exclude admin
     const recentActivity = visitEvents
-        .filter(e => e.profiles?.role === 'gf' || !e.profiles)
-        .slice(0, 8);
+        .filter(e => !isAdminRow(e))
+        .slice(0, 15);
 
     return (
         <div className="space-y-4">
@@ -739,9 +770,8 @@ function VisitsTab({ sessions }) {
                                                     Visit #{daySessions.length - idx}
                                                 </span>
                                             </div>
-                                            <span className={`font-mono text-xs font-medium ${
-                                                session.is_active ? 'text-green-400' : 'text-rose-300'
-                                            }`}>
+                                            <span className={`font-mono text-xs font-medium ${session.is_active ? 'text-green-400' : 'text-rose-300'
+                                                }`}>
                                                 {durationStr}
                                             </span>
                                         </div>
@@ -754,9 +784,8 @@ function VisitsTab({ sessions }) {
                                             <span className="text-white/20">→</span>
                                             <div className="flex items-center gap-1.5 bg-white/5 rounded-lg px-2.5 py-1">
                                                 <span className="text-white/40 text-[10px]">OUT</span>
-                                                <span className={`font-mono text-xs ${
-                                                    session.is_active ? 'text-green-400' : 'text-white/70'
-                                                }`}>{endTimeStr}</span>
+                                                <span className={`font-mono text-xs ${session.is_active ? 'text-green-400' : 'text-white/70'
+                                                    }`}>{endTimeStr}</span>
                                             </div>
                                         </div>
 
@@ -855,8 +884,17 @@ function ResponsesTab({ responses, filter, setFilter, selectedResponse, setSelec
                                         )}
 
                                         <p className={`text-white text-sm leading-relaxed ${selectedResponse?.id === resp.id ? '' : 'line-clamp-2'}`}>
-                                            {resp.response_text || '(No text response)'}
+                                            {resp.response_text
+                                                ? (<>&#8220;{resp.response_text}&#8221;</>)
+                                                : '(No text response)'}
                                         </p>
+
+                                        {/* Show response_data summary for richer context */}
+                                        {resp.response_data && Object.keys(resp.response_data).length > 0 && selectedResponse?.id !== resp.id && (
+                                            <p className="text-white/25 text-[10px] mt-1 line-clamp-1">
+                                                data: {Object.entries(resp.response_data).map(([k,v]) => `${k}=${typeof v === 'object' ? JSON.stringify(v) : v}`).join(', ')}
+                                            </p>
+                                        )}
 
                                         {/* Expanded details */}
                                         <AnimatePresence>
@@ -922,11 +960,10 @@ function DevicesTab({ deviceLogs }) {
                                 <p className="text-white/30 text-[10px]">{formatDate(log.logged_in_at)}</p>
                             </div>
                         </div>
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full border ${
-                            log.device_type === 'mobile'
-                                ? 'bg-blue-500/10 text-blue-300 border-blue-500/20'
-                                : 'bg-purple-500/10 text-purple-300 border-purple-500/20'
-                        }`}>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full border ${log.device_type === 'mobile'
+                            ? 'bg-blue-500/10 text-blue-300 border-blue-500/20'
+                            : 'bg-purple-500/10 text-purple-300 border-purple-500/20'
+                            }`}>
                             {log.device_type}
                         </span>
                     </div>
@@ -962,7 +999,7 @@ function DevicesTab({ deviceLogs }) {
 // ACTIVITY TAB
 // ═══════════════════════════════════════
 function ActivityTab({ events }) {
-    const gfEvents = events.filter(e => e.profiles?.role === 'gf' || !e.profiles);
+    const gfEvents = events.filter(e => !isAdminRow(e));
 
     if (gfEvents.length === 0) {
         return <EmptyState icon="⚡" message="No activity events tracked yet." />;
@@ -1019,11 +1056,10 @@ function FilterChip({ active, onClick, label }) {
     return (
         <button
             onClick={onClick}
-            className={`px-3 py-1.5 rounded-lg text-[11px] font-medium whitespace-nowrap transition-all ${
-                active
-                    ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
-                    : 'bg-white/5 text-white/40 border border-transparent hover:bg-white/10'
-            }`}
+            className={`px-3 py-1.5 rounded-lg text-[11px] font-medium whitespace-nowrap transition-all ${active
+                ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                : 'bg-white/5 text-white/40 border border-transparent hover:bg-white/10'
+                }`}
         >
             {label}
         </button>
@@ -1077,7 +1113,10 @@ function formatEventLabel(type, feature) {
         case 'tab_hidden': return '👻 Switched away from tab';
         case 'tab_visible': return '👁️ Came back to the tab';
         case 'page_close': return '🚪 Left the site';
-        default: return `${type} ${feature || ''}`;
+        case 'locked_day_tap': return `🔒 Tried locked day: ${feature || 'unknown'}`;
+        case 'scroll': return '📜 Scrolled the page';
+        case 'heartbeat': return '💓 Still on the site';
+        default: return `📡 ${type}${feature ? ': ' + feature : ''}`;
     }
 }
 
@@ -1089,6 +1128,9 @@ function getEventIcon(type) {
         case 'tab_hidden': return '👻';
         case 'tab_visible': return '👁️';
         case 'page_close': return '🚪';
+        case 'locked_day_tap': return '🔒';
+        case 'scroll': return '📜';
+        case 'heartbeat': return '💓';
         default: return '📌';
     }
 }
@@ -1107,6 +1149,8 @@ function getNotifIcon(type) {
         case 'page_close': return '🚪';
         case 'tab_hidden': return '👻';
         case 'tab_visible': return '👁️';
+        case 'locked_day_tap': return '🔒';
+        case 'heartbeat': return '💓';
         default: return '📡';
     }
 }
@@ -1124,6 +1168,8 @@ function getNotifStyle(type) {
             return 'bg-rose-500/20 border-rose-500/30';
         case 'feature_open':
             return 'bg-blue-500/20 border-blue-500/30';
+        case 'locked_day_tap':
+            return 'bg-amber-500/20 border-amber-500/30';
         default:
             return 'bg-white/10 border-white/20';
     }
@@ -1149,6 +1195,8 @@ function getLiveEventStyle(type) {
         case 'tab_visible':
         case 'page_view':
             return 'bg-emerald-500/10 border-emerald-500/20';
+        case 'locked_day_tap':
+            return 'bg-amber-500/10 border-amber-500/20';
         default:
             return 'bg-white/5 border-white/10';
     }
