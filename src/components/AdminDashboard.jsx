@@ -113,9 +113,19 @@ export default function AdminDashboard({ onClose }) {
         fetchAllData();
     }, [fetchAllData]);
 
-    // NO POLLING — Realtime subscriptions handle instant updates via WebSocket.
-    // Manual refresh button available for on-demand data reload.
-    // Realtime is ms-level instant (WebSocket push, not polling).
+    // ── POLLING BACKUP — In case Realtime WebSocket fails silently ──
+    // Realtime is primary (ms-level instant). Polling is BACKUP only (every 30s).
+    const realtimeStatusRef = useRef('connecting');
+    const [realtimeStatus, setRealtimeStatus] = useState('connecting');
+
+    useEffect(() => {
+        // Backup polling: refetch every 30s regardless
+        const pollInterval = setInterval(() => {
+            fetchAllData(false);
+        }, 30000);
+
+        return () => clearInterval(pollInterval);
+    }, [fetchAllData]);
 
     // ── Comprehensive Real-time subscriptions ──
     // Listen to ALL tracking tables for instant updates
@@ -221,10 +231,17 @@ export default function AdminDashboard({ onClose }) {
             })
             .subscribe((status) => {
                 console.log('Admin realtime subscription status:', status);
+                realtimeStatusRef.current = status;
+                setRealtimeStatus(status);
+                // If realtime disconnects, immediately refetch to stay current
+                if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'closed') {
+                    console.warn('[Admin] Realtime disconnected! Falling back to polling refresh.');
+                    fetchAllData(false);
+                }
             });
 
         return () => { supabase.removeChannel(channel); };
-    }, [addLiveNotification]);
+    }, [addLiveNotification, fetchAllData]);
 
     // ── Derived Stats ──
     // STRATEGY: Exclude admin rows → everything else is GF activity
@@ -296,10 +313,10 @@ export default function AdminDashboard({ onClose }) {
                     <div className="flex items-center gap-2">
                         <button
                             onClick={() => setAutoRefresh(!autoRefresh)}
-                            className={`text-xs px-2 py-1 rounded-lg transition-colors ${autoRefresh ? 'bg-green-500/20 text-green-300' : 'bg-white/10 text-white/40'}`}
-                            title="Realtime is always active via WebSocket"
+                            className={`text-xs px-2 py-1 rounded-lg transition-colors ${realtimeStatus === 'SUBSCRIBED' ? 'bg-green-500/20 text-green-300' : realtimeStatus === 'CHANNEL_ERROR' ? 'bg-red-500/20 text-red-300' : 'bg-yellow-500/20 text-yellow-300'}`}
+                            title={`Realtime: ${realtimeStatus} | Backup polling: every 30s`}
                         >
-                            {autoRefresh ? '📡 Realtime' : '📡 Realtime'}
+                            {realtimeStatus === 'SUBSCRIBED' ? '📡 Live' : realtimeStatus === 'CHANNEL_ERROR' ? '⚠️ Disconnected' : '⏳ Connecting...'}
                         </button>
                         <button
                             onClick={() => fetchAllData(true)}

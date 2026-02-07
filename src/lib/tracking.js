@@ -103,14 +103,17 @@ export async function processRetryQueue() {
             let success = false;
 
             try {
+                // Always strip session_id in retry queue to avoid FK violations
+                const cleanPayload = { ...item.payload, session_id: null };
+
                 if (item.type === 'response') {
-                    const { error } = await supabase.from('game_responses').insert(item.payload);
+                    const { error } = await supabase.from('game_responses').insert(cleanPayload);
                     success = !error;
-                    if (error) console.error('[Tracking] Retry failed:', error);
+                    if (error) console.error('[Tracking] Retry failed:', error.message, error.code);
                 } else if (item.type === 'event') {
-                    const { error } = await supabase.from('visit_events').insert(item.payload);
+                    const { error } = await supabase.from('visit_events').insert(cleanPayload);
                     success = !error;
-                    if (error) console.error('[Tracking] Retry failed:', error);
+                    if (error) console.error('[Tracking] Retry failed:', error.message, error.code);
                 }
             } catch (e) {
                 console.error('[Tracking] Retry error:', e);
@@ -137,6 +140,7 @@ export async function processRetryQueue() {
 
 /**
  * Save a game response with multiple fallback layers
+ * Handles FK constraint errors by retrying without session_id
  */
 export async function saveGameResponse({ gameType, questionText, responseText, responseData = {} }) {
     const userId = await getCurrentUserId();
@@ -162,6 +166,8 @@ export async function saveGameResponse({ gameType, questionText, responseText, r
 
     // FALLBACK 2: Try to save to database with retry
     let lastError = null;
+    let triedWithoutSession = false;
+
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
         try {
             const { data, error } = await supabase
@@ -178,28 +184,82 @@ export async function saveGameResponse({ gameType, questionText, responseText, r
             }
 
             lastError = error;
-            console.warn(`[Tracking] Attempt ${attempt} failed:`, error?.message);
+            const errMsg = error?.message || '';
+            console.warn(`[Tracking] Attempt ${attempt} failed:`, errMsg, error?.code, error?.details);
+
+            // FK violation on session_id — retry WITHOUT session_id
+            if (!triedWithoutSession && (
+                errMsg.includes('foreign key') ||
+                errMsg.includes('violates') ||
+                errMsg.includes('session_id') ||
+                errMsg.includes('auth_sessions') ||
+                error?.code === '23503'
+            )) {
+                console.warn('[Tracking] ⚠️ FK error detected — retrying WITHOUT session_id');
+                payload.session_id = null;
+                triedWithoutSession = true;
+                // Don't count this as a wasted attempt
+                attempt--;
+                continue;
+            }
 
             if (attempt < MAX_RETRIES) {
                 await new Promise(r => setTimeout(r, RETRY_DELAY * attempt));
             }
         } catch (err) {
             lastError = err;
-            console.warn(`[Tracking] Attempt ${attempt} error:`, err.message);
+            const errMsg = err?.message || '';
+            console.warn(`[Tracking] Attempt ${attempt} error:`, errMsg);
+
+            // FK violation catch — retry without session_id
+            if (!triedWithoutSession && (
+                errMsg.includes('foreign key') ||
+                errMsg.includes('violates') ||
+                errMsg.includes('session_id')
+            )) {
+                console.warn('[Tracking] ⚠️ FK error in catch — retrying WITHOUT session_id');
+                payload.session_id = null;
+                triedWithoutSession = true;
+                attempt--;
+                continue;
+            }
+
             if (attempt < MAX_RETRIES) {
                 await new Promise(r => setTimeout(r, RETRY_DELAY * attempt));
             }
         }
     }
 
-    // FALLBACK 3: Add to retry queue for later
-    console.error('[Tracking] All attempts failed, adding to retry queue');
-    addToRetryQueue('response', payload);
+    // FALLBACK 3: Last-ditch — try once more with completely stripped payload (no session_id)
+    if (payload.session_id !== null) {
+        try {
+            console.warn('[Tracking] Last-ditch attempt with session_id = null');
+            const { data, error } = await supabase
+                .from('game_responses')
+                .insert({ ...payload, session_id: null })
+                .select()
+                .single();
+
+            if (!error && data) {
+                console.log('[Tracking] ✅ Last-ditch save SUCCEEDED!');
+                markLocalItemSynced(LOCAL_RESPONSES_KEY, payload);
+                return data;
+            }
+            console.error('[Tracking] Last-ditch failed:', error?.message);
+        } catch (e) {
+            console.error('[Tracking] Last-ditch error:', e.message);
+        }
+    }
+
+    // FALLBACK 4: Add to retry queue for later
+    console.error('[Tracking] ❌ ALL attempts failed for:', gameType, '| Error:', lastError?.message);
+    addToRetryQueue('response', { ...payload, session_id: null });
     return null;
 }
 
 /**
  * Track visit events with fallbacks
+ * Handles FK constraint errors by retrying without session_id
  */
 export async function trackEvent(eventType, featureName = null, metadata = {}) {
     const userId = await getCurrentUserId();
@@ -222,22 +282,36 @@ export async function trackEvent(eventType, featureName = null, metadata = {}) {
         return;
     }
 
-    // FALLBACK 2: Try database with retry
-    for (let attempt = 1; attempt <= 2; attempt++) {
+    // FALLBACK 2: Try database with retry + FK error handling
+    for (let attempt = 1; attempt <= 3; attempt++) {
         try {
             const { error } = await supabase.from('visit_events').insert(payload);
             if (!error) {
                 console.log(`[Tracking] ✅ Event tracked: ${eventType} ${featureName || ''}`);
                 return;
             }
-            console.warn(`[Tracking] Event attempt ${attempt} failed:`, error.message);
+
+            const errMsg = error?.message || '';
+            console.warn(`[Tracking] Event attempt ${attempt} failed:`, errMsg, error?.code);
+
+            // FK violation → retry without session_id
+            if (errMsg.includes('foreign key') || errMsg.includes('violates') || error?.code === '23503') {
+                console.warn('[Tracking] FK error on event — retrying without session_id');
+                payload.session_id = null;
+                const { error: retryErr } = await supabase.from('visit_events').insert(payload);
+                if (!retryErr) {
+                    console.log(`[Tracking] ✅ Event tracked (no session): ${eventType}`);
+                    return;
+                }
+                console.warn('[Tracking] Retry without session also failed:', retryErr?.message);
+            }
         } catch (err) {
             console.warn(`[Tracking] Event error:`, err.message);
         }
     }
 
-    // FALLBACK 3: Queue for later
-    addToRetryQueue('event', payload);
+    // FALLBACK 3: Queue for later (always strip session_id in queue)
+    addToRetryQueue('event', { ...payload, session_id: null });
 }
 
 /**
@@ -488,10 +562,10 @@ export async function syncAllLocalData() {
                     continue;
                 }
 
-                // Push to DB
+                // Push to DB — always use session_id: null in sync to avoid FK violations
                 const payload = {
                     user_id: userId,
-                    session_id: item.session_id || localStorage.getItem('current_session_id') || null,
+                    session_id: null,
                     game_type: gameType,
                     question_text: questionText,
                     response_text: responseText,
@@ -509,7 +583,7 @@ export async function syncAllLocalData() {
                         syncedCount++;
                         console.log(`[Sync] ✅ Pushed response: ${gameType} — "${(responseText || '').substring(0, 50)}"`);
                     } else {
-                        console.warn('[Sync] Insert failed:', error.message);
+                        console.warn('[Sync] Insert failed:', error.message, error.code);
                     }
                 } catch (e) {
                     console.warn('[Sync] Error inserting response:', e.message);
@@ -535,7 +609,7 @@ export async function syncAllLocalData() {
             for (const item of unsyncedEvents) {
                 const payload = {
                     user_id: userId,
-                    session_id: item.session_id || localStorage.getItem('current_session_id') || null,
+                    session_id: null, // Always null in sync to avoid FK violations
                     event_type: item.event_type || item.eventType,
                     feature_name: item.feature_name || item.featureName || null,
                     metadata: item.metadata || {},
