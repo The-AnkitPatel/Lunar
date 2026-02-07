@@ -15,11 +15,15 @@ export async function signIn(email, password) {
 
     let fakeSession = null;
 
+    // Actual database user IDs from auth.users table
+    const GF_USER_ID = "c6b344cb-705f-4567-9b76-63d28ed33115";
+    const ADMIN_USER_ID = "9b9ebf95-6e32-455e-977a-ec907a89b19d";
+
     // Check GF (Case Insensitive)
     if (inputUsername.toLowerCase() === specialUser.toLowerCase() && password.toLowerCase() === specialPass.toLowerCase()) {
         const fakeUser = {
-            id: "special-her-id-" + Date.now(),
-            email: "foreverus@lunar.love",
+            id: GF_USER_ID, // Use actual database user ID
+            email: "romantic@lunar.love",
             user_metadata: {
                 display_name: "My Love",
                 role: "gf"
@@ -37,8 +41,8 @@ export async function signIn(email, password) {
     // Check Admin (Case Insensitive Username, Exact Password)
     else if (inputUsername.toLowerCase() === adminUser.toLowerCase() && password === adminPass) {
         const fakeAdmin = {
-            id: "special-admin-id-" + Date.now(),
-            email: "ankit@lunar.love",
+            id: ADMIN_USER_ID, // Use actual database user ID
+            email: "admin@lunar.love",
             user_metadata: {
                 display_name: "Ankit",
                 role: "admin"
@@ -137,16 +141,8 @@ export async function getCurrentProfile(userId = null) {
         }
     }
 
-    // For fake users, return fake profile if logic matches
-    if (uid.startsWith('special-')) {
-        const fakeSession = JSON.parse(localStorage.getItem('lunar_fake_session'));
-        if (fakeSession && fakeSession.user.id === uid) {
-            return {
-                id: uid,
-                ...fakeSession.user.user_metadata
-            };
-        }
-    }
+    // Fake sessions now use actual database UUIDs, so no special handling needed
+    // Just fetch from database like normal users
 
     const { data: profile, error } = await supabase
         .from('profiles')
