@@ -1,5 +1,52 @@
 import { useState, useEffect, useCallback } from 'react';
 import { LoveContext } from './context';
+import { useAuth } from '../hooks/useAuth';
+
+// Helper: get a user-scoped localStorage key — NEVER falls back to old unscoped keys
+function userKey(userId, key) {
+    return `${userId || '_nouser'}_${key}`;
+}
+
+// Helper: read JSON from user-scoped localStorage
+function readUserStorage(userId, key, fallback) {
+    if (!userId) return fallback;
+    try {
+        const raw = localStorage.getItem(userKey(userId, key));
+        return raw ? JSON.parse(raw) : fallback;
+    } catch {
+        return fallback;
+    }
+}
+
+// Helper: write JSON to user-scoped localStorage
+function writeUserStorage(userId, key, value) {
+    if (!userId) return;
+    localStorage.setItem(userKey(userId, key), JSON.stringify(value));
+}
+
+// One-time cleanup: remove old SHARED (unscoped) localStorage keys
+// so they never bleed into the wrong user's session
+const OLD_SHARED_KEYS = [
+    'userName', 'achievements', 'loveStats', 'redeemedCoupons',
+    'claimedPromises', 'completedBucketItems', 'valentineUnlocked',
+    'fulfilledPromises', 'spinCount', 'spinHistory', 'readLetters',
+    'couplesPlaylist', 'lunar_proposal_response'
+];
+const CLEANUP_VERSION = '2'; // Bump this to force re-cleanup
+function cleanupOldSharedKeys() {
+    if (localStorage.getItem('_lunar_shared_keys_cleaned') === CLEANUP_VERSION) return;
+    OLD_SHARED_KEYS.forEach(key => localStorage.removeItem(key));
+    // Also nuke any leftover proposal keys that might be stale
+    // (covers old user-scoped keys written before DB was cleaned)
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+        const k = localStorage.key(i);
+        if (k && k.endsWith('_lunar_proposal_response')) {
+            localStorage.removeItem(k);
+        }
+    }
+    localStorage.setItem('_lunar_shared_keys_cleaned', CLEANUP_VERSION);
+    console.log('[LoveContext] Cleaned up old shared localStorage keys (v' + CLEANUP_VERSION + ')');
+}
 
 // Romantic toast messages for different interactions
 const romanticMessages = {
@@ -71,91 +118,93 @@ const getRandomMessage = (category) => {
 };
 
 export function LoveProvider({ children }) {
+    const { session } = useAuth();
+    const userId = session?.user?.id || null;
+
+    // Clean up old shared keys once (migrates from shared -> per-user storage)
+    useEffect(() => { cleanupOldSharedKeys(); }, []);
+
     // Skip login - direct access
     const [isUnlocked, setIsUnlocked] = useState(true);
 
     const [userName, setUserName] = useState(() => {
-        return localStorage.getItem('userName') || 'My Love';
+        return userId ? (localStorage.getItem(userKey(userId, 'userName')) || 'My Love') : 'My Love';
     });
 
     const [toast, setToast] = useState(null);
 
-    const [achievements, setAchievements] = useState(() => {
-        const saved = localStorage.getItem('achievements');
-        return saved ? JSON.parse(saved) : {
-            firstVisit: false,
-            quizMaster: false,
-            memoryChamp: false,
-            spinAddict: false,
-            couponCollector: false,
-            challengeAccepted: false,
-            truthSeeker: false,
-            promiseKeeper: false,
-            bucketListStarter: false,
-            secretFinder: false,
-            loveExplorer: false,
-            midnightLover: false,
-            konamiMaster: false
-        };
-    });
+    const defaultAchievements = {
+        firstVisit: false,
+        quizMaster: false,
+        memoryChamp: false,
+        spinAddict: false,
+        couponCollector: false,
+        challengeAccepted: false,
+        truthSeeker: false,
+        promiseKeeper: false,
+        bucketListStarter: false,
+        secretFinder: false,
+        loveExplorer: false,
+        midnightLover: false,
+        konamiMaster: false
+    };
 
-    const [stats, setStats] = useState(() => {
-        const saved = localStorage.getItem('loveStats');
-        return saved ? JSON.parse(saved) : {
-            totalSpins: 0,
-            quizzesTaken: 0,
-            memoryGamesWon: 0,
-            couponsRedeemed: 0,
-            challengesCompleted: 0,
-            promisesClaimed: 0,
-            sectionsVisited: [],
-            lastVisit: null
-        };
-    });
+    const defaultStats = {
+        totalSpins: 0,
+        quizzesTaken: 0,
+        memoryGamesWon: 0,
+        couponsRedeemed: 0,
+        challengesCompleted: 0,
+        promisesClaimed: 0,
+        sectionsVisited: [],
+        lastVisit: null
+    };
 
-    const [redeemedCoupons, setRedeemedCoupons] = useState(() => {
-        const saved = localStorage.getItem('redeemedCoupons');
-        return saved ? JSON.parse(saved) : [];
-    });
+    const [achievements, setAchievements] = useState(() => readUserStorage(userId, 'achievements', defaultAchievements));
+    const [stats, setStats] = useState(() => readUserStorage(userId, 'loveStats', defaultStats));
+    const [redeemedCoupons, setRedeemedCoupons] = useState(() => readUserStorage(userId, 'redeemedCoupons', []));
+    const [claimedPromises, setClaimedPromises] = useState(() => readUserStorage(userId, 'claimedPromises', []));
+    const [completedBucketItems, setCompletedBucketItems] = useState(() => readUserStorage(userId, 'completedBucketItems', []));
 
-    const [claimedPromises, setClaimedPromises] = useState(() => {
-        const saved = localStorage.getItem('claimedPromises');
-        return saved ? JSON.parse(saved) : [];
-    });
-
-    const [completedBucketItems, setCompletedBucketItems] = useState(() => {
-        const saved = localStorage.getItem('completedBucketItems');
-        return saved ? JSON.parse(saved) : [];
-    });
-
-    // Save to localStorage
+    // Reload all state when user changes (login/logout/switch)
     useEffect(() => {
-        localStorage.setItem('valentineUnlocked', isUnlocked);
-    }, [isUnlocked]);
+        if (!userId) return;
+        setUserName(localStorage.getItem(userKey(userId, 'userName')) || 'My Love');
+        setAchievements(readUserStorage(userId, 'achievements', defaultAchievements));
+        setStats(readUserStorage(userId, 'loveStats', defaultStats));
+        setRedeemedCoupons(readUserStorage(userId, 'redeemedCoupons', []));
+        setClaimedPromises(readUserStorage(userId, 'claimedPromises', []));
+        setCompletedBucketItems(readUserStorage(userId, 'completedBucketItems', []));
+    }, [userId]);
+
+    // Save to user-scoped localStorage
+    useEffect(() => {
+        if (userId) writeUserStorage(userId, 'valentineUnlocked', isUnlocked);
+    }, [isUnlocked, userId]);
 
     useEffect(() => {
-        localStorage.setItem('userName', userName);
-    }, [userName]);
+        if (userId) localStorage.setItem(userKey(userId, 'userName'), userName);
+    }, [userName, userId]);
 
     useEffect(() => {
-        localStorage.setItem('achievements', JSON.stringify(achievements));
-    }, [achievements]);
+        if (userId) writeUserStorage(userId, 'achievements', achievements);
+    }, [achievements, userId]);
 
     useEffect(() => {
-        localStorage.setItem('loveStats', JSON.stringify(stats));
-    }, [stats]);
+        if (userId) writeUserStorage(userId, 'loveStats', stats);
+    }, [stats, userId]);
 
     useEffect(() => {
-        localStorage.setItem('redeemedCoupons', JSON.stringify(redeemedCoupons));
-    }, [redeemedCoupons]);
+        if (userId) writeUserStorage(userId, 'redeemedCoupons', redeemedCoupons);
+    }, [redeemedCoupons, userId]);
 
     useEffect(() => {
-        localStorage.setItem('claimedPromises', JSON.stringify(claimedPromises));
-    }, [claimedPromises]);
+        if (userId) writeUserStorage(userId, 'claimedPromises', claimedPromises);
+    }, [claimedPromises, userId]);
 
     useEffect(() => {
-        localStorage.setItem('completedBucketItems', JSON.stringify(completedBucketItems));
-    }, [completedBucketItems]);
+        if (userId) writeUserStorage(userId, 'completedBucketItems', completedBucketItems);
+    }, [completedBucketItems, userId]);
 
     // Show toast notification
     const showToast = useCallback((message, type = 'love') => {

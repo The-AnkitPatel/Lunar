@@ -3,21 +3,32 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { promiseSlips } from '../data/gameData';
 import { saveGameResponse } from '../lib/tracking';
 import { useLoveContext } from '../hooks/useLoveContext';
+import { useAuth } from '../hooks/useAuth';
 
 export default function PromiseJar() {
     const { claimedPromises, claimPromise } = useLoveContext();
+    const { session } = useAuth();
+    const userId = session?.user?.id || '';
+    const storageKey = `${userId || '_nouser'}_fulfilledPromises`;
+
     const [selectedPromise, setSelectedPromise] = useState(null);
     const [isShaking, setIsShaking] = useState(false);
     const [, setUnfoldingId] = useState(null);
     const [showFulfilled, setShowFulfilled] = useState(false);
     const [fulfilledPromises, setFulfilledPromises] = useState(() => {
-        const saved = localStorage.getItem('fulfilledPromises');
+        const saved = localStorage.getItem(storageKey);
         return saved ? JSON.parse(saved) : [];
     });
 
+    // Reload fulfilled promises when user changes
     useEffect(() => {
-        localStorage.setItem('fulfilledPromises', JSON.stringify(fulfilledPromises));
-    }, [fulfilledPromises]);
+        const saved = localStorage.getItem(storageKey);
+        setFulfilledPromises(saved ? JSON.parse(saved) : []);
+    }, [storageKey]);
+
+    useEffect(() => {
+        localStorage.setItem(storageKey, JSON.stringify(fulfilledPromises));
+    }, [fulfilledPromises, storageKey]);
 
     const unclaimed = promiseSlips.filter(p => !claimedPromises.includes(p.id));
     const claimed = promiseSlips.filter(p => claimedPromises.includes(p.id));

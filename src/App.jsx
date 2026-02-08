@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LoveProvider } from './context/LoveContext';
 import { AuthProvider } from './context/AuthProvider';
@@ -11,35 +11,23 @@ import RomanticToast from './components/RomanticToast';
 import LockTimerModal from './components/LockTimerModal';
 import { valentinesDays } from './data/valentinesDays';
 
-// Lazy load game components for faster initial load
-const LoveQuiz = lazy(() => import('./components/LoveQuiz'));
-const MemoryGame = lazy(() => import('./components/MemoryGame'));
-const SpinWheel = lazy(() => import('./components/SpinWheel'));
-const LoveLetter = lazy(() => import('./components/LoveLetter'));
-const LoveCoupons = lazy(() => import('./components/LoveCoupons'));
-const PromiseJar = lazy(() => import('./components/PromiseJar'));
-const ScratchCard = lazy(() => import('./components/ScratchCard'));
-const SecretGarden = lazy(() => import('./components/SecretGarden'));
-const TruthOrLove = lazy(() => import('./components/TruthOrLove'));
-const WouldYouRather = lazy(() => import('./components/WouldYouRather'));
-const CompleteSentence = lazy(() => import('./components/CompleteSentence'));
-const ProposalGame = lazy(() => import('./components/ProposalGame'));
-const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
-const LoveMap = lazy(() => import('./components/LoveMap'));
-const DreamDatePlanner = lazy(() => import('./components/DreamDatePlanner'));
+// Eager-load all game components for instant switching (no loading spinners)
+import LoveQuiz from './components/LoveQuiz';
+import MemoryGame from './components/MemoryGame';
+import SpinWheel from './components/SpinWheel';
+import LoveLetter from './components/LoveLetter';
+import LoveCoupons from './components/LoveCoupons';
+import PromiseJar from './components/PromiseJar';
+import ScratchCard from './components/ScratchCard';
+import SecretGarden from './components/SecretGarden';
+import TruthOrLove from './components/TruthOrLove';
+import WouldYouRather from './components/WouldYouRather';
+import CompleteSentence from './components/CompleteSentence';
+import ProposalGame from './components/ProposalGame';
+import AdminDashboard from './components/AdminDashboard';
+import LoveMap from './components/LoveMap';
+import DreamDatePlanner from './components/DreamDatePlanner';
 
-// Loading spinner for lazy components
-function GameLoader() {
-  return (
-    <div className="flex items-center justify-center py-12">
-      <motion.div
-        animate={{ rotate: 360 }}
-        transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-        className="w-8 h-8 border-2 border-pink-500/30 border-t-pink-500 rounded-full"
-      />
-    </div>
-  );
-}
 
 // All features unlocked - Each day has a unique game to bring you closer
 const dayFeatures = [
@@ -221,9 +209,7 @@ function AppContent() {
         {/* Admin Dashboard */}
         <AnimatePresence>
           {showAdminDashboard && (
-            <Suspense fallback={<GameLoader />}>
               <AdminDashboard onClose={() => setShowAdminDashboard(false)} />
-            </Suspense>
           )}
         </AnimatePresence>
 
@@ -361,9 +347,7 @@ function AppContent() {
                     </div>
                   </div>
 
-                  <Suspense fallback={<GameLoader />}>
                     {renderFeatureContent()}
-                  </Suspense>
                 </section>
               )}
             </motion.div>

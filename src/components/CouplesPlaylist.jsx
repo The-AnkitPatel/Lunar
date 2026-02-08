@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { saveGameResponse } from '../lib/tracking';
 import { playlistSuggestions } from '../data/gameData';
+import { useAuth } from '../hooks/useAuth';
 
 const moods = [
     { key: 'all', label: 'All', icon: '🎵' },
@@ -12,9 +13,13 @@ const moods = [
 ];
 
 export default function CouplesPlaylist() {
+    const { session } = useAuth();
+    const userId = session?.user?.id || '';
+    const storageKey = `${userId || '_nouser'}_couplesPlaylist`;
+
     const [activeMood, setActiveMood] = useState('all');
     const [playlist, setPlaylist] = useState(() => {
-        const saved = localStorage.getItem('couplesPlaylist');
+        const saved = localStorage.getItem(storageKey);
         return saved ? JSON.parse(saved) : [];
     });
     const [showCustom, setShowCustom] = useState(false);
@@ -29,9 +34,15 @@ export default function CouplesPlaylist() {
             duration: 0.5 + Math.random() * 0.3,
         })));
 
+    // Reload when user changes
     useEffect(() => {
-        localStorage.setItem('couplesPlaylist', JSON.stringify(playlist));
-    }, [playlist]);
+        const saved = localStorage.getItem(storageKey);
+        setPlaylist(saved ? JSON.parse(saved) : []);
+    }, [storageKey]);
+
+    useEffect(() => {
+        localStorage.setItem(storageKey, JSON.stringify(playlist));
+    }, [playlist, storageKey]);
 
     const filtered = useMemo(() => {
         if (activeMood === 'all') return playlistSuggestions;

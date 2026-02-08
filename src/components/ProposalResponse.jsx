@@ -1,13 +1,17 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { saveGameResponse, trackEvent, getGameResponses } from '../lib/tracking';
+import { useAuth } from '../hooks/useAuth';
 
-const PROPOSAL_KEY = 'lunar_proposal_response';
+// Get user-scoped proposal key
+function getProposalKey(userId) {
+    return `${userId || '_nouser'}_lunar_proposal_response`;
+}
 
 // Sync localStorage proposal response to Supabase on load
-async function syncProposalToSupabase() {
+async function syncProposalToSupabase(proposalKey) {
     try {
-        const stored = localStorage.getItem(PROPOSAL_KEY);
+        const stored = localStorage.getItem(proposalKey);
         if (!stored) return;
         const data = JSON.parse(stored);
         if (data.synced) return; // Already synced
@@ -26,7 +30,7 @@ async function syncProposalToSupabase() {
         if (result) {
             // Mark as synced in localStorage
             data.synced = true;
-            localStorage.setItem(PROPOSAL_KEY, JSON.stringify(data));
+            localStorage.setItem(proposalKey, JSON.stringify(data));
             console.log('[ProposalResponse] ✅ Synced to Supabase!');
         }
     } catch (e) {
@@ -38,7 +42,7 @@ async function syncProposalToSupabase() {
  * Fetch proposal response from Supabase (cross-device support).
  * If localStorage is empty but Supabase has a record, populate localStorage.
  */
-async function fetchProposalFromSupabase() {
+async function fetchProposalFromSupabase(proposalKey) {
     try {
         const responses = await getGameResponses('proposal_forever');
         if (responses && responses.length > 0) {
@@ -57,7 +61,7 @@ async function fetchProposalFromSupabase() {
                     fetchedFromDb: true,
                 };
                 // Save to this device's localStorage so it works offline too
-                localStorage.setItem(PROPOSAL_KEY, JSON.stringify(data));
+                localStorage.setItem(proposalKey, JSON.stringify(data));
                 console.log('[ProposalResponse] ✅ Fetched from Supabase & saved to localStorage');
                 return data;
             }
@@ -69,10 +73,14 @@ async function fetchProposalFromSupabase() {
 }
 
 export default function ProposalResponse() {
+    const { session } = useAuth();
+    const userId = session?.user?.id || '';
+    const proposalKey = getProposalKey(userId);
+
     // Initialize state from localStorage synchronously
     const storedData = (() => {
         try {
-            const stored = localStorage.getItem(PROPOSAL_KEY);
+            const stored = localStorage.getItem(proposalKey);
             if (stored) return JSON.parse(stored);
         } catch { /* ignore */ }
         return null;
@@ -94,33 +102,61 @@ export default function ProposalResponse() {
             color: ['#ec4899', '#a855f7', '#ef4444', '#f59e0b', '#10b981'][i % 5],
         })));
 
-    // On mount: if localStorage has data → sync to Supabase
-    // If localStorage is EMPTY → fetch from Supabase (cross-device support)
+    // Re-initialize when user/proposalKey changes (handles user switching)
+    // DB is ALWAYS the source of truth — localStorage is just a cache
     useEffect(() => {
-        if (storedData?.accepted) {
-            // Has local data → sync it to DB (in case it wasn't synced yet)
-            syncProposalToSupabase();
-            trackEvent('proposal_response_revisit', 'proposal_forever', {
-                previousResponse: storedData.response,
-                previousDate: storedData.respondedAt,
-            });
+        let cancelled = false;
+
+        // Reset UI to loading while we check DB
+        setLoading(true);
+        setHasResponded(false);
+        setAccepted(false);
+        setResponseData(null);
+        setNoAttempts(0);
+        setNoMessage('');
+        setShowCelebration(false);
+
+        // Always verify against DB first
+        fetchProposalFromSupabase(proposalKey).then((dbData) => {
+            if (cancelled) return;
+
+            if (dbData) {
+                // DB has a record → this user genuinely accepted
+                setResponseData(dbData);
+                setHasResponded(true);
+                setAccepted(true);
+                trackEvent('proposal_response_loaded_from_db', 'proposal_forever', {
+                    respondedAt: dbData.respondedAt,
+                });
+            } else {
+                // DB has NO record → clear any stale localStorage and show fresh
+                localStorage.removeItem(proposalKey);
+                // Also clear any old unscoped key that might exist
+                localStorage.removeItem('lunar_proposal_response');
+                setHasResponded(false);
+                setAccepted(false);
+                setResponseData(null);
+            }
             setLoading(false);
-        } else {
-            // No local data → check Supabase (maybe she responded on another device)
-            fetchProposalFromSupabase().then((dbData) => {
-                if (dbData) {
-                    setResponseData(dbData);
-                    setHasResponded(true);
-                    setAccepted(true);
-                    trackEvent('proposal_response_loaded_from_db', 'proposal_forever', {
-                        respondedAt: dbData.respondedAt,
-                    });
-                }
-                setLoading(false);
-            });
-        }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+        }).catch(() => {
+            if (cancelled) return;
+            // On network error, fall back to localStorage as last resort
+            let localData = null;
+            try {
+                const stored = localStorage.getItem(proposalKey);
+                if (stored) localData = JSON.parse(stored);
+            } catch { /* ignore */ }
+
+            if (localData?.accepted) {
+                setResponseData(localData);
+                setHasResponded(true);
+                setAccepted(true);
+            }
+            setLoading(false);
+        });
+
+        return () => { cancelled = true; };
+    }, [proposalKey]);
 
     const noMessages = [
         "Arre arre... yeh galat button hai madam ji! 😤",
@@ -143,7 +179,7 @@ export default function ProposalResponse() {
         };
 
         // Save to localStorage FIRST
-        localStorage.setItem(PROPOSAL_KEY, JSON.stringify(data));
+        localStorage.setItem(proposalKey, JSON.stringify(data));
         setResponseData(data);
         setAccepted(true);
         setHasResponded(true);
@@ -162,7 +198,7 @@ export default function ProposalResponse() {
         }).then((result) => {
             if (result) {
                 data.synced = true;
-                localStorage.setItem(PROPOSAL_KEY, JSON.stringify(data));
+                localStorage.setItem(proposalKey, JSON.stringify(data));
             }
         });
 

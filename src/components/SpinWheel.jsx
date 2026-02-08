@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLoveContext } from '../hooks/useLoveContext';
+import { useAuth } from '../hooks/useAuth';
 import { saveGameResponse } from '../lib/tracking';
 import { wheelMessages, wheelCategories } from '../data/gameData';
 
@@ -10,25 +11,38 @@ const segmentColors = [
 ];
 
 export default function SpinWheel() {
+  const { session } = useAuth();
+  const userId = session?.user?.id || '';
+  const spinCountKey = `${userId || '_nouser'}_spinCount`;
+  const spinHistoryKey = `${userId || '_nouser'}_spinHistory`;
+
   const [spinning, setSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
   const [result, setResult] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [spinCount, setSpinCount] = useState(() => {
-    return parseInt(localStorage.getItem('spinCount') || '0');
+    return parseInt(localStorage.getItem(spinCountKey) || '0');
   });
 
   // Load history from localStorage so user sees past results even after refresh
   const [history, setHistory] = useState(() => {
-    const saved = localStorage.getItem('spinHistory');
+    const saved = localStorage.getItem(spinHistoryKey);
     return saved ? JSON.parse(saved) : [];
   });
 
   // Ensure history is shown by default if limit passed
   const [showHistory, setShowHistory] = useState(() => {
-    const count = parseInt(localStorage.getItem('spinCount') || '0');
+    const count = parseInt(localStorage.getItem(spinCountKey) || '0');
     return count >= 3;
   });
+
+  // Reload spin state when user changes
+  useEffect(() => {
+    setSpinCount(parseInt(localStorage.getItem(spinCountKey) || '0'));
+    const saved = localStorage.getItem(spinHistoryKey);
+    setHistory(saved ? JSON.parse(saved) : []);
+    setShowHistory(parseInt(localStorage.getItem(spinCountKey) || '0') >= 3);
+  }, [spinCountKey, spinHistoryKey]);
 
   const { showRomanticToast, unlockAchievement, incrementStat } = useLoveContext();
 
@@ -77,13 +91,13 @@ export default function SpinWheel() {
 
       const newHistory = [won, ...history].slice(0, 5);
       setHistory(newHistory);
-      localStorage.setItem('spinHistory', JSON.stringify(newHistory));
+      localStorage.setItem(spinHistoryKey, JSON.stringify(newHistory));
 
       setSpinning(false);
 
       const newCount = spinCount + 1;
       setSpinCount(newCount);
-      localStorage.setItem('spinCount', newCount.toString());
+      localStorage.setItem(spinCountKey, newCount.toString());
 
       saveGameResponse({
         gameType: 'spin_wheel',

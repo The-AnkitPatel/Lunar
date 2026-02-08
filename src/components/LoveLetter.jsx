@@ -2,19 +2,30 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { loveFacts } from '../data/gameData';
 import { saveGameResponse } from '../lib/tracking';
+import { useAuth } from '../hooks/useAuth';
 
 export default function LoveLetter() {
+    const { session } = useAuth();
+    const userId = session?.user?.id || '';
+    const storageKey = `${userId || '_nouser'}_readLetters`;
+
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isOpening, setIsOpening] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
     const [readLetters, setReadLetters] = useState(() => {
-        const saved = localStorage.getItem('readLetters');
+        const saved = localStorage.getItem(storageKey);
         return saved ? JSON.parse(saved) : [];
     });
 
+    // Reload when user changes
     useEffect(() => {
-        localStorage.setItem('readLetters', JSON.stringify(readLetters));
-    }, [readLetters]);
+        const saved = localStorage.getItem(storageKey);
+        setReadLetters(saved ? JSON.parse(saved) : []);
+    }, [storageKey]);
+
+    useEffect(() => {
+        localStorage.setItem(storageKey, JSON.stringify(readLetters));
+    }, [readLetters, storageKey]);
 
     const letter = loveFacts[currentIndex];
 

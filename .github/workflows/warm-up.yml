@@ -1,0 +1,37 @@
+name: Keep Alive - Warm Serverless
+
+on:
+  schedule:
+    # Every 10 minutes
+    - cron: '*/10 * * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  warm-up:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Netlify App
+        run: |
+          echo "Warming up Netlify..."
+          curl -s -o /dev/null -w "%{http_code}" https://for-my-soulmate-km.netlify.app/ || true
+          echo " -> Done"
+
+      - name: Ping Supabase
+        run: |
+          echo "Warming up Supabase..."
+          curl -s -o /dev/null -w "%{http_code}" https://fpmdvyctnuexqphujave.supabase.co/rest/v1/ \
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" || true
+          echo " -> Done"
+
+      - name: Ping Supabase Auth
+        run: |
+          echo "Warming up Supabase Auth..."
+          curl -s -o /dev/null -w "%{http_code}" https://fpmdvyctnuexqphujave.supabase.co/auth/v1/health || true
+          echo " -> Done"
+
+      - name: Warm Supabase Edge Functions (if any)
+        run: |
+          echo "Warming Supabase Realtime..."
+          curl -s -o /dev/null -w "%{http_code}" https://fpmdvyctnuexqphujave.supabase.co/realtime/v1/health || true
+          echo " -> Done"
